@@ -9,8 +9,8 @@ ingresa su código y ve solo a quién le toca. Es un sitio estático para GitHub
 usuarios pueden crear un **perfil** (Supabase, link mágico por correo) para guardar listas.
 
 La solicitud original y los requerimientos están en `docs/REQUERIMIENTOS.md`. Las decisiones de diseño (D1–D18, con
-alternativas descartadas y amenazas aceptadas) están en `docs/DECISIONES.md`, y el avance en `docs/TAREAS.md`.
-**Al tomar una decisión nueva, agrégala como D19, D20… en `DECISIONES.md` y marca el avance en `TAREAS.md`.**
+alternativas descartadas y amenazas aceptadas) están en `docs/DECISIONES.md`, y el avance en `docs/TAREAS.md` (resumen de lo hecho y lo pendiente en `docs/ESTADO.md`).
+**Al tomar una decisión nueva, agrégala como D19, D20… en `DECISIONES.md`, marca el avance en `TAREAS.md` y actualiza `ESTADO.md`.**
 Toda la documentación y la UI están en español.
 
 ## Comandos
