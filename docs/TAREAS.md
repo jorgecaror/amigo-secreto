@@ -53,7 +53,9 @@
 ## Fase 3 — Publicación (2026-11-23) — D18
 - [x] Identidad de git solo en este repo + primer commit
 - [x] Repo `github.com/jorgecaror/amigo-secreto` (creado por el usuario) + push a `main`
-- [ ] Activar GitHub Pages (rama `main`, carpeta raíz) → `https://jorgecaror.github.io/amigo-secreto/`
+- [x] GitHub Pages activo (rama `main`, raíz) → `https://jorgecaror.github.io/amigo-secreto/`
+- [x] Verificado en vivo: páginas 200, 404 propio, canonical real, SHA de `supabase.js` intacto; sorteo de 4 y revelación
+      con código en Edge; CSP fijada al proyecto; participante sin Supabase; consola limpia
 - [ ] Supabase: Site URL y Redirect URL con la URL pública; probar login desde el sitio publicado
 - [ ] Probar un link real desde el celular (abrir, revelar, WhatsApp)
 
