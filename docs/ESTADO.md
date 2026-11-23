@@ -24,15 +24,13 @@ Este archivo es el resumen. El detalle de cada tarea está en [`TAREAS.md`](TARE
 | Supabase real | Proyecto creado, schema ejecutado, SMTP propio, `config.js` con la clave anon. Verificado: `anon` sin acceso, registro habilitado, **login real probado** | `SUPABASE-SETUP.md` |
 | Revisión de seguridad | Revisión independiente: 0 altos, 2 medios, 3 bajos → los 5 corregidos y con prueba | `SEGURIDAD.md`, D17 |
 | Pruebas | `npm test` (lógica + RLS en Postgres 16) y `npm run test:e2e` (Edge headless): todo OK | `test/` |
+| URLs de Supabase | Site URL y Redirect URLs del sitio publicado; dominios ajenos rechazados. Aviso claro si el link de login venció | `perfil.js` |
 | Publicación | Commits en `main`, GitHub Pages activo, verificado en vivo (páginas, 404, sorteo, revelación, CSP, consola limpia) | D18 |
 
 ## ⏳ Pendiente
 
 ### Lo hace el usuario
-1. **Supabase → Authentication → URL Configuration:**
-   - Site URL `https://jorgecaror.github.io/amigo-secreto/`.
-   - Agregar en Redirect URLs `https://jorgecaror.github.io/amigo-secreto/**`.
-   - Luego probar el login desde el sitio publicado.
+1. **Probar el login desde el sitio publicado.** Las URLs de Supabase ya están configuradas y verificadas.
 2. **Probar desde el celular:** sorteo pequeño, compartir un link por WhatsApp, abrirlo y revelarlo con el código.
 3. **Completar el checklist manual de perfiles** (`SUPABASE-SETUP.md` §6):
    - Guardar una lista y recargar.

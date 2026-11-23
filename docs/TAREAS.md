@@ -56,7 +56,10 @@
 - [x] GitHub Pages activo (rama `main`, raíz) → `https://jorgecaror.github.io/amigo-secreto/`
 - [x] Verificado en vivo: páginas 200, 404 propio, canonical real, SHA de `supabase.js` intacto; sorteo de 4 y revelación
       con código en Edge; CSP fijada al proyecto; participante sin Supabase; consola limpia
-- [ ] Supabase: Site URL y Redirect URL con la URL pública; probar login desde el sitio publicado
+- [x] Supabase: Site URL y Redirect URLs con la URL pública. Verificado: publicado, `index.html` y local aceptados; dominio
+      ajeno rechazado → vuelve a la Site URL
+- [x] Link de login vencido (`#error=otp_expired`): antes no mostraba aviso; ahora avisa, limpia la URL y no carga Supabase (E2E 5c)
+- [ ] Probar login desde el sitio publicado
 - [ ] Probar un link real desde el celular (abrir, revelar, WhatsApp)
 
 ## Ideas futuras (no comprometidas)

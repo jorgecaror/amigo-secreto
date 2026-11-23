@@ -220,6 +220,18 @@ try {
   assert.deepEqual(consola, [], 'consola: ' + consola);
   ok('Perfil con sesión: guarda lista (POST), re-guarda (PATCH), historial = {lista_id, participantes:4}, 0 fugas de links/códigos, perfil y salir OK');
 
+  // ===== 5c. Link de login vencido: Supabase vuelve con #error=… =====
+  await evaluar(`try{localStorage.clear()}catch(e){} return true;`);
+  await ir(BASE + 'index.html#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired');
+  const venc = await evaluar(`const $=id=>document.getElementById(id);
+    return { org: !$('vista-organizador').hidden, card: !$('login-card').hidden, msg: $('login-msg').textContent,
+      hash: location.hash, libCargada: !!window.supabase };`);
+  assert.ok(venc.org && venc.card, 'organizador con tarjeta de login');
+  assert.match(venc.msg, /venció o ya se usó/);
+  assert.equal(venc.hash, '', 'limpia el #error de la URL');
+  assert.ok(!venc.libCargada, 'no carga supabase.js solo para mostrar el error');
+  ok('Link vencido (#error=otp_expired): aviso claro, URL limpia, sin cargar Supabase');
+
   // ===== 6. Páginas auxiliares =====
   await ir(BASE + 'privacidad.html');
   const priv = await evaluar(`return {h1:document.querySelector('h1').textContent, css:getComputedStyle(document.body).backgroundColor}`);

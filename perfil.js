@@ -117,25 +117,44 @@
     }
   }
 
+  // Supabase devuelve los errores del link (vencido, ya usado) en ?error=… o en #error=…. Un hash de participante
+  // (#2.…) nunca llega aquí: perfil.js no corre en esa vista.
+  function errorDeUrl() {
+    var q = new URLSearchParams(location.search);
+    if (q.has('error') || q.has('error_description')) return q.get('error_code') || q.get('error') || 'error';
+    if (/^#error/.test(location.hash) || /[#&]error_description=/.test(location.hash)) {
+      var h = new URLSearchParams(location.hash.slice(1));
+      return h.get('error_code') || h.get('error') || 'error';
+    }
+    return null;
+  }
+
   function limpiarUrl() {
     var p = new URLSearchParams(location.search);
-    if (p.has('code') || p.has('error') || p.has('error_description')) {
-      history.replaceState(null, '', location.pathname + location.hash);
+    var hashError = /^#error/.test(location.hash) || /[#&]error_description=/.test(location.hash);
+    if (p.has('code') || p.has('error') || p.has('error_description') || hashError) {
+      history.replaceState(null, '', location.pathname + (hashError ? '' : location.hash));
     }
+  }
+
+  function avisarLinkFallido(codigo) {
+    limpiarUrl();
+    $('login-card').hidden = false;
+    msg('login-msg', codigo === 'otp_expired'
+      ? 'Ese link ya venció o ya se usó. Pide uno nuevo.'
+      : 'No se pudo iniciar sesión con ese link. Debe abrirse en el mismo navegador donde lo pediste y solo sirve una vez. Pide uno nuevo.', true);
   }
 
   async function retomarSesion() {
     var vieneDeLink = new URLSearchParams(location.search).has('code');
-    var errorUrl = new URLSearchParams(location.search).get('error_description');
+    var errorUrl = errorDeUrl();
+    if (errorUrl && !vieneDeLink) { avisarLinkFallido(errorUrl); if (!haySesionGuardada()) return; }
     try {
       var c = await obtenerCliente();
       var r = await c.auth.getSession(); // espera el canje del ?code= (PKCE)
       limpiarUrl();
       aplicarSesion(r.data && r.data.session);
-      if ((vieneDeLink || errorUrl) && !(r.data && r.data.session)) {
-        $('login-card').hidden = false;
-        msg('login-msg', 'No se pudo iniciar sesión con ese link. Debe abrirse en el mismo navegador donde lo pediste y solo sirve una vez. Pide uno nuevo.', true);
-      }
+      if (vieneDeLink && !(r.data && r.data.session)) avisarLinkFallido(errorUrl);
     } catch (e) {
       limpiarUrl();
       console.warn('[perfil]', e);
@@ -380,5 +399,5 @@
   document.addEventListener('sorteo-realizado', registrarSorteo);
 
   var p = new URLSearchParams(location.search);
-  if (p.has('code') || p.has('error_description') || haySesionGuardada()) retomarSesion();
+  if (p.has('code') || errorDeUrl() || haySesionGuardada()) retomarSesion();
 })();
