@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amigo Secreto Online Gratis – Sorteo privado por link | Sin registro</title>
+<meta name="description" content="Sortea tu amigo secreto (amigo invisible) online y gratis. Agrega exclusiones y envía a cada persona su link privado por WhatsApp. Sin registro.">
+<meta name="referrer" content="no-referrer">
+<!-- CSP (D11, D16): scripts solo propios; la única red permitida es Supabase (perfiles). La vista participante
+     agrega además connect-src 'none' desde app.js. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src https://*.supabase.co; manifest-src 'self'; base-uri 'none'; form-action 'none'">
+<!-- URL pública (si cambia, actualizar también privacidad.html, robots.txt y sitemap.xml) -->
+<link rel="canonical" href="https://jorgecaror.github.io/amigo-secreto/">
+<meta name="theme-color" content="#b3261e">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_CL">
+<meta property="og:site_name" content="Amigo Secreto">
+<meta property="og:title" content="Amigo Secreto Online Gratis – Sorteo privado por link">
+<meta property="og:description" content="Sortea tu amigo secreto en segundos y envía a cada persona su link privado por WhatsApp. Gratis y sin registro.">
+<meta property="og:url" content="https://jorgecaror.github.io/amigo-secreto/">
+<meta property="og:image" content="https://jorgecaror.github.io/amigo-secreto/img/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Amigo Secreto: sorteo online gratis y privado">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="estilos.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Amigo Secreto",
+  "alternateName": ["Amigo secreto online", "Sorteo de amigo secreto", "Amigo invisible online"],
+  "url": "https://jorgecaror.github.io/amigo-secreto/",
+  "description": "Herramienta gratuita para sortear el amigo secreto (amigo invisible) online. Cada participante recibe un link privado y cifrado con su resultado.",
+  "applicationCategory": "LifestyleApplication",
+  "operatingSystem": "Web",
+  "inLanguage": "es",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "featureList": ["Sorteo sin que nadie se toque a sí mismo", "Exclusiones (parejas)", "Link privado por persona con código", "Envío por WhatsApp", "Datos del evento: monto, fecha y lugar", "Listas guardadas con cuenta opcional"]
+}
+</script>
+<script type="application/ld+json" id="faq-ld">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "¿Cómo funciona el amigo secreto online?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Escribes los nombres de los participantes, presionas Sortear y la página genera un link y un código para cada persona. Cada uno abre su link, ingresa su código y ve solo a quién le toca regalar." } },
+    { "@type": "Question", "name": "¿Es gratis? ¿Necesito registrarme?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Es gratis y no necesitas registrarte para sortear. La cuenta es opcional y solo sirve para guardar tus listas de participantes." } },
+    { "@type": "Question", "name": "¿El organizador puede ver los resultados?",
+      "acceptedAnswer": { "@type": "Answer", "text": "La página nunca le muestra los resultados al organizador, así que también puede participar. Cada resultado va cifrado dentro del link y solo se abre con el código de esa persona. Para más privacidad, envía el código por un canal distinto al link." } },
+    { "@type": "Question", "name": "¿Puedo evitar que a una pareja le toque entre sí?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Sí. Agrega una exclusión entre esas dos personas y el sorteo nunca las emparejará, en ningún sentido." } },
+    { "@type": "Question", "name": "¿Es lo mismo que el amigo invisible o el intercambio de regalos?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Sí. Amigo secreto, amigo invisible e intercambio de regalos son nombres distintos para el mismo juego, y esta herramienta sirve para todos." } },
+    { "@type": "Question", "name": "¿Dónde se guardan los resultados del sorteo?",
+      "acceptedAnswer": { "@type": "Answer", "text": "En ningún servidor. Cada resultado existe solo dentro del link cifrado de cada persona. Aunque tengas cuenta, solo se guardan tus listas de nombres, nunca quién le regala a quién." } },
+    { "@type": "Question", "name": "¿Qué pasa si alguien pierde su link?",
+      "acceptedAnswer": { "@type": "Answer", "text": "El navegador del organizador recuerda el último sorteo, así que puede volver a copiar el link y el código de esa persona sin repetir el sorteo." } }
+  ]
+}
+</script>
+</head>
+<body>
+
+<header class="topbar solo-organizador">
+  <a class="marca" href="./">🎁 Amigo Secreto</a>
+  <!-- Sesión (perfil.js). Oculta si Supabase no está configurado. -->
+  <div class="sesion" id="barra-sesion" hidden>
+    <button type="button" class="link" id="btn-login">Iniciar sesión</button>
+    <span id="sesion-info" hidden>
+      <span class="sesion-email" id="sesion-email"></span>
+      <button type="button" class="link" id="btn-perfil">Mi perfil</button>
+      <button type="button" class="link" id="btn-salir">Salir</button>
+    </span>
+  </div>
+</header>
+
+<main>
+
+  <!-- ================= Vista organizador ================= -->
+  <section id="vista-organizador" hidden>
+    <h1>Amigo secreto online: sorteo gratis y privado</h1>
+    <p class="sub">Ingresa los participantes, sortea y envía a cada uno su link personal por WhatsApp. Nadie ve el resultado de otro, ni siquiera tú.</p>
+
+    <!-- Login (perfil.js) -->
+    <div class="card" id="login-card" hidden>
+      <h2>Iniciar sesión</h2>
+      <p class="hint" style="margin-top:0">Te enviaremos un link a tu correo; no hay contraseñas. Ábrelo <strong>en este mismo navegador</strong>. La cuenta es opcional: solo sirve para guardar tus listas.</p>
+      <form id="login-form" autocomplete="on">
+        <label for="login-email">Correo</label>
+        <input id="login-email" type="email" required maxlength="254" autocomplete="email" placeholder="tu@correo.com">
+        <div class="row" style="margin-top:12px">
+          <button type="submit" class="primary" id="btn-login-enviar">Enviarme el link</button>
+          <button type="button" id="btn-login-cancelar">Cancelar</button>
+        </div>
+      </form>
+      <div id="login-msg" class="hint" hidden></div>
+      <p class="hint">Al continuar aceptas la <a href="privacidad.html">política de privacidad</a>.</p>
+    </div>
+
+    <!-- Perfil (perfil.js) -->
+    <div class="card" id="panel-perfil" hidden>
+      <div class="fila-top"><h2>Mi perfil</h2><button type="button" class="link" id="btn-perfil-cerrar">Cerrar ✕</button></div>
+      <p class="hint" style="margin-top:0" id="perfil-email"></p>
+      <h3 style="margin-top:12px">Mis listas</h3>
+      <div id="perfil-listas"></div>
+      <h3 style="margin-top:16px">Historial de sorteos</h3>
+      <p class="hint" style="margin-top:0">Solo fecha y cantidad de personas. Los resultados nunca se guardan.</p>
+      <div id="perfil-historial"></div>
+      <h3 style="margin-top:16px">Mis datos</h3>
+      <div class="actions">
+        <button type="button" class="danger" id="btn-borrar-datos">Borrar todas mis listas e historial</button>
+        <button type="button" class="danger" id="btn-eliminar-cuenta">Eliminar mi cuenta</button>
+      </div>
+      <div class="err" id="perfil-msg" hidden></div>
+    </div>
+
+    <!-- Formulario -->
+    <div id="form-sorteo">
+      <!-- Mis listas (perfil.js, solo con sesión) -->
+      <div class="card" id="mis-listas-card" hidden>
+        <h2>📂 Mis listas</h2>
+        <div class="row">
+          <select id="sel-lista" aria-label="Elegir una lista guardada"><option value="">Elegir lista guardada…</option></select>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <input id="lista-nombre" maxlength="80" placeholder="Nombre de la lista (ej. Familia 2026)" aria-label="Nombre de la lista">
+          <button type="button" id="btn-guardar-lista">💾 Guardar</button>
+          <button type="button" id="btn-lista-nueva" title="Empezar una lista nueva">Nueva</button>
+        </div>
+        <div class="hint" id="listas-msg" hidden></div>
+      </div>
+
+      <div class="card">
+        <h2>1. Participantes</h2>
+        <label for="nombres">Un nombre por línea (mínimo 3)</label>
+        <textarea id="nombres" placeholder="Ana&#10;Beto&#10;Caro&#10;Dani"></textarea>
+        <p class="hint" id="conteo">0 participantes</p>
+      </div>
+
+      <div class="card">
+        <h2>2. Exclusiones <span class="muted">(opcional)</span></h2>
+        <p class="hint" style="margin-top:0">Pares que no pueden tocarse entre sí (ej. parejas). Aplica en ambos sentidos.</p>
+        <div class="row" style="margin-top:8px">
+          <select id="exc-a" aria-label="Persona A"></select>
+          <span>↔</span>
+          <select id="exc-b" aria-label="Persona B"></select>
+          <button type="button" id="exc-agregar">Agregar</button>
+        </div>
+        <ul class="list" id="exc-lista"></ul>
+      </div>
+
+      <div class="card">
+        <h2>3. Datos del evento <span class="muted">(opcional)</span></h2>
+        <div class="grid">
+          <div><label for="ev-monto">Monto máximo</label><input id="ev-monto" maxlength="40" placeholder="$15.000"></div>
+          <div><label for="ev-fecha">Fecha</label><input id="ev-fecha" type="date"></div>
+        </div>
+        <label for="ev-lugar">Lugar</label><input id="ev-lugar" maxlength="120" placeholder="Casa de la abuela">
+        <label for="ev-mensaje">Mensaje</label><input id="ev-mensaje" maxlength="200" placeholder="¡Nada de calcetines!">
+      </div>
+
+      <button type="button" class="primary big" id="btn-sortear">🎲 Sortear</button>
+      <div class="err" id="errores" hidden></div>
+    </div>
+
+    <!-- Resultado (solo links, nunca quién le toca a quién) -->
+    <div id="resultado" hidden>
+      <div class="card">
+        <h2>✅ Sorteo listo</h2>
+        <p class="hint" style="margin-top:0" id="res-info"></p>
+        <p class="hint">Cada persona necesita <strong>su link y su código</strong>. Para más seguridad, envía el código por otro canal (en persona, otro chat). No abras los links de los demás 😉</p>
+        <ul class="list" id="links"></ul>
+      </div>
+      <button type="button" id="btn-nuevo">🔄 Nuevo sorteo</button>
+    </div>
+  </section>
+
+  <!-- ================= Vista participante ================= -->
+  <section id="vista-participante" hidden>
+    <div class="card center" id="p-confirmar">
+      <div class="gift">🎁</div>
+      <h2>Amigo Secreto</h2>
+      <p>Este link es para <strong id="p-nombre"></strong>.</p>
+      <form id="p-form" autocomplete="off">
+        <label for="p-codigo">Ingresa tu código secreto</label>
+        <input id="p-codigo" class="codigo-input" placeholder="XXX-XXX" maxlength="9" inputmode="text"
+               autocapitalize="characters" autocorrect="off" spellcheck="false">
+        <button type="submit" class="primary big" id="btn-revelar">Revelar</button>
+      </form>
+      <div class="err" id="p-msg" hidden></div>
+      <p class="hint">¿No eres tú? Cierra esta página y no la compartas. Sin el código nadie puede ver el resultado.</p>
+    </div>
+
+    <div class="card center" id="p-resultado" hidden>
+      <div class="gift">🎉</div>
+      <p style="margin:0"><span id="p-hola"></span>, te toca regalarle a:</p>
+      <div class="reveal-name" id="p-recibe"></div>
+      <dl id="p-evento"></dl>
+      <p class="hint" style="margin-top:16px">Guarda el secreto 🤫</p>
+      <button type="button" id="btn-ocultar">Ocultar</button>
+    </div>
+
+    <div class="card center" id="p-error" hidden>
+      <div class="gift">😕</div>
+      <h2>Link no válido</h2>
+      <p>Este link está incompleto o dañado. Pídele al organizador que te lo vuelva a enviar.</p>
+    </div>
+  </section>
+
+  <!-- ================= Contenido informativo (SEO) ================= -->
+  <section class="info solo-organizador" id="info">
+    <h2>Cómo funciona</h2>
+    <ol class="pasos">
+      <li><strong>Escribe los nombres.</strong> Agrega exclusiones si hay parejas que no deben tocarse entre sí, y los datos del evento: monto máximo, fecha y lugar.</li>
+      <li><strong>Sortea.</strong> A nadie le toca a sí mismo y cada persona recibe exactamente un regalo. Tú tampoco ves los resultados.</li>
+      <li><strong>Envía los links.</strong> Cada participante recibe su link y su código por WhatsApp, lo abre y descubre a quién le regala.</li>
+    </ol>
+
+    <h2>Por qué usar este sorteo de amigo secreto</h2>
+    <ul class="beneficios">
+      <li>🔒 <strong>Privado de verdad:</strong> cada resultado va cifrado y solo se abre con el código de esa persona.</li>
+      <li>🙅 <strong>Sin registro:</strong> sortea al instante, sin correos ni contraseñas. La cuenta es opcional.</li>
+      <li>💑 <strong>Exclusiones:</strong> evita que a las parejas o hermanos les toque entre sí.</li>
+      <li>📱 <strong>Para WhatsApp:</strong> un botón por persona para enviarle su link.</li>
+      <li>🎄 <strong>Para cualquier ocasión:</strong> Navidad, la oficina, el curso o la familia.</li>
+      <li>💸 <strong>Gratis:</strong> sin anuncios y hasta 100 participantes por sorteo.</li>
+    </ul>
+
+    <h2>Preguntas frecuentes</h2>
+    <div id="faq">
+      <details><summary>¿Cómo funciona el amigo secreto online?</summary><p>Escribes los nombres de los participantes, presionas Sortear y la página genera un link y un código para cada persona. Cada uno abre su link, ingresa su código y ve solo a quién le toca regalar.</p></details>
+      <details><summary>¿Es gratis? ¿Necesito registrarme?</summary><p>Es gratis y no necesitas registrarte para sortear. La cuenta es opcional y solo sirve para guardar tus listas de participantes.</p></details>
+      <details><summary>¿El organizador puede ver los resultados?</summary><p>La página nunca le muestra los resultados al organizador, así que también puede participar. Cada resultado va cifrado dentro del link y solo se abre con el código de esa persona. Para más privacidad, envía el código por un canal distinto al link.</p></details>
+      <details><summary>¿Puedo evitar que a una pareja le toque entre sí?</summary><p>Sí. Agrega una exclusión entre esas dos personas y el sorteo nunca las emparejará, en ningún sentido.</p></details>
+      <details><summary>¿Es lo mismo que el amigo invisible o el intercambio de regalos?</summary><p>Sí. Amigo secreto, amigo invisible e intercambio de regalos son nombres distintos para el mismo juego, y esta herramienta sirve para todos.</p></details>
+      <details><summary>¿Dónde se guardan los resultados del sorteo?</summary><p>En ningún servidor. Cada resultado existe solo dentro del link cifrado de cada persona. Aunque tengas cuenta, solo se guardan tus listas de nombres, nunca quién le regala a quién.</p></details>
+      <details><summary>¿Qué pasa si alguien pierde su link?</summary><p>El navegador del organizador recuerda el último sorteo, así que puede volver a copiar el link y el código de esa persona sin repetir el sorteo.</p></details>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <a href="privacidad.html">Privacidad</a> · Amigo Secreto — sorteo online gratis
+</footer>
+
+<script src="sorteo.js"></script>
+<script src="app.js"></script>
+<script src="config.js"></script>
+<script src="perfil.js"></script>
+</body>
+</html>

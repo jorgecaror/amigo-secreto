@@ -1,0 +1,16 @@
+{
+  "name": "Amigo Secreto – Sorteo online",
+  "short_name": "Amigo Secreto",
+  "description": "Sortea tu amigo secreto y envía a cada persona su link privado.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f3ee",
+  "theme_color": "#b3261e",
+  "icons": [
+    { "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

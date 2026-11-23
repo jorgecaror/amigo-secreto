@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://jorgecaror.github.io/amigo-secreto/sitemap.xml
