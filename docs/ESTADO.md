@@ -27,21 +27,20 @@ Este archivo es el resumen. El detalle de cada tarea está en [`TAREAS.md`](TARE
 | URLs de Supabase | Site URL y Redirect URLs del sitio publicado; dominios ajenos rechazados. Aviso claro si el link de login venció | `perfil.js` |
 | Link corto (v3) | De ~970 a ~120–220 caracteres, sin servidor; los links v2 ya enviados siguen funcionando | `sorteo.js`, D19 |
 | Envío por correo | **Funcionando en producción.** Botón al resultado + código, enviado por el sitio (Edge Function + Gmail) solo con sesión y con clic; cupos por usuario y global; WhatsApp igual que antes | `supabase/functions/enviar-correo/`, `app.js`, `perfil.js`, D20 |
-| Diseño de correos | Un diseño para el correo del participante y los de login (Magic Link, Confirm signup), claro y oscuro | `supabase/correos/`, D21 |
+| Diseño de correos | **Aplicado en producción.** Un diseño para el correo del participante y los de login (Magic Link, Confirm signup), claro y oscuro | `supabase/correos/`, D21 |
 | Publicación | Commits en `main`, GitHub Pages activo, verificado en vivo (páginas, 404, sorteo, revelación, CSP, consola limpia) | D18 |
 
 ## ⏳ Pendiente
 
 ### Lo hace el usuario
-1. **Aplicar las plantillas de login** (todavía llega el diseño antiguo): en tu terminal, con `SUPABASE_ACCESS_TOKEN`, ejecuta `node supabase/correos/aplicar.mjs`. El envío del sorteo por correo ya funciona en producción (probado el 2026-11-27).
-2. **Probar el login desde el sitio publicado.** Las URLs de Supabase ya están configuradas y verificadas.
-3. **Probar desde el celular:** sorteo pequeño, compartir un link por WhatsApp, abrirlo y revelarlo con el código.
-4. **Completar el checklist manual de perfiles** (`SUPABASE-SETUP.md` §6):
+1. **Probar el login desde el sitio publicado.** Las URLs de Supabase ya están configuradas y verificadas.
+2. **Probar desde el celular:** sorteo pequeño, compartir un link por WhatsApp, abrirlo y revelarlo con el código.
+3. **Completar el checklist manual de perfiles** (`SUPABASE-SETUP.md` §6):
    - Guardar una lista y recargar.
    - Revisar el historial.
    - Comprobar que una segunda cuenta no ve las listas.
    - Eliminar una cuenta.
-5. **Google Search Console** (`SEO.md`):
+4. **Google Search Console** (`SEO.md`):
    - Agregar la propiedad.
    - Verificar con la etiqueta HTML (pasarla para agregarla a `index.html`).
    - Enviar `sitemap.xml`. Hay que hacerlo a mano: en una subcarpeta de github.io, Google no lee `robots.txt`.
