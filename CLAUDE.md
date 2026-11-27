@@ -22,6 +22,7 @@ npm run test:sorteo              # lógica: miles de sorteos, códigos, cifrado 
 npm run test:correo              # Edge Function: validación anti-phishing, plantillas, supabase/correos al día
 npm run test:funcion             # Edge Function corriendo en Deno con Supabase y SMTP simulados (requiere Deno)
 npm run correos                  # regenera supabase/correos/*.html (plantillas de login) desde correo.mjs
+node supabase/correos/aplicar.mjs   # aplica esas plantillas en Supabase por la Management API (SUPABASE_ACCESS_TOKEN)
 npm run correos:vista            # vistas previas + capturas de los 3 correos en una carpeta temporal
 npm run test:rls                 # supabase/schema.sql en Postgres 16 real (PGlite) con auth emulado
 npm run test:e2e                 # navegador headless vía CDP (Edge por defecto; otra ruta: NAVEGADOR=...)
