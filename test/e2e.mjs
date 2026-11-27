@@ -261,8 +261,16 @@ try {
     out.fugaRest=d.links.some(l=>rest.includes(l.codigo)||rest.includes(l.url.split('#')[1].slice(0,40)))||rest.includes('ejemplo.cl');
     $('btn-perfil').click(); await esperar(()=>$('perfil-historial').textContent.length>0);
     out.tablaPerfil=$('perfil-listas').innerText.replace(/\\s+/g,' ').trim(); out.historial=$('perfil-historial').innerText.replace(/\\s+/g,' ').trim();
+    // Salir con un sorteo en pantalla: primero se cancela el aviso (no pasa nada), después se acepta (D22).
+    let avisos=0; window.confirm=()=>{avisos++; return false;};
+    $('btn-salir').click(); await new Promise(r=>setTimeout(r,500));
+    out.cancelado={avisos, sesion:!!localStorage.getItem('amigo-secreto-auth'), resultado:!$('resultado').hidden, ultimo:!!localStorage.getItem('amigo-secreto:ultimo')};
+    window.confirm=()=>{avisos++; return true;};
     $('btn-salir').click(); await esperar(()=>!$('btn-login').hidden);
-    out.trasSalir={misListas:$('mis-listas-card').hidden, panel:$('panel-perfil').hidden, sesion:localStorage.getItem('amigo-secreto-auth')};
+    out.trasSalir={misListas:$('mis-listas-card').hidden, panel:$('panel-perfil').hidden, sesion:localStorage.getItem('amigo-secreto-auth'),
+      resultado:$('resultado').hidden, form:!$('form-sorteo').hidden, nombres:$('nombres').value, lugar:$('ev-lugar').value,
+      ultimo:localStorage.getItem('amigo-secreto:ultimo'), conteo:$('conteo').textContent, exclusiones:$('exc-lista').children.length,
+      links:$('links').children.length, listaNombre:$('lista-nombre').value, avisos};
     return out;`);
   assert.equal(flujo.email, 'jorge@ejemplo.cl'); assert.ok(flujo.misListas && flujo.loginOculto);
   assert.deepEqual(flujo.bodyLista, { nombre: 'Familia', participantes: ['Ana', 'Beto', 'Caro', 'Dani'], exclusiones: [['Ana', 'Beto']], evento: { lugar: 'Casa' } });
@@ -277,9 +285,12 @@ try {
   assert.equal(flujo.correo.estados[0], '✓ correo enviado'); assert.match(flujo.correo.estados[2], /No se pudo enviar/); assert.equal(flujo.correo.estados[1], '');
   assert.equal(flujo.fugaRest, false, 'links, códigos y correos nunca van a rest/v1');
   assert.match(flujo.tablaPerfil, /Familia 4/); assert.match(flujo.historial, /Familia · 4 personas|Familia.*4 personas/);
-  assert.deepEqual(flujo.trasSalir, { misListas: true, panel: true, sesion: null });
+  assert.deepEqual(flujo.cancelado, { avisos: 1, sesion: true, resultado: true, ultimo: true }, 'cancelar el aviso no cierra sesión ni borra');
+  assert.deepEqual(flujo.trasSalir, { misListas: true, panel: true, sesion: null, resultado: true, form: true, nombres: '', lugar: '',
+    ultimo: null, conteo: '0 participantes', exclusiones: 0, links: 0, listaNombre: '', avisos: 2 }, 'salir deja el formulario vacío');
   assert.deepEqual(consola, [], 'consola: ' + consola);
   ok('Perfil con sesión: guarda lista (POST), re-guarda (PATCH), historial = {lista_id, participantes:4}, 0 fugas de links/códigos, perfil y salir OK');
+  ok('Salir con sorteo en pantalla: avisa; si se cancela no pasa nada; si se acepta, borra el sorteo y vuelve al formulario vacío');
   ok('Correo con sesión: 1 POST a la función solo al hacer clic, con JWT, solo filas con correo; estados por fila; nada a rest/v1');
 
   // ===== 5c. Link de login vencido: Supabase vuelve con #error=… =====

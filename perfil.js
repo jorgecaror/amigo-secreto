@@ -184,9 +184,22 @@
     }
   }
 
+  // Volver al formulario vacío (D22): en un equipo compartido, quien llegue después no debe ver el sorteo anterior.
+  function limpiarPantalla() {
+    app.limpiar();
+    listaActualId = null;
+    $('lista-nombre').value = '';
+    $('sel-lista').value = '';
+    msg('listas-msg', '');
+    window.scrollTo(0, 0);
+  }
+
   async function salir() {
+    if (!$('resultado').hidden && !confirm('Al cerrar sesión se borra de este navegador el sorteo en pantalla (links, ' +
+      'códigos y correos). Si aún no los enviaste todos, cancela y envíalos primero.\n\n¿Cerrar sesión?')) return;
     try { var c = await obtenerCliente(); await c.auth.signOut(); } catch (e) { console.warn('[perfil]', e); }
     aplicarSesion(null);
+    limpiarPantalla();
   }
 
   // ---------- Listas ----------
@@ -374,6 +387,7 @@
       if (r.error) throw r.error;
       await c.auth.signOut({ scope: 'local' });
       aplicarSesion(null);
+      limpiarPantalla();
       alert('Tu cuenta fue eliminada.');
     } catch (e) {
       msg('perfil-msg', textoError(e), true);

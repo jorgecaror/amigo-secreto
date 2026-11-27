@@ -9,9 +9,9 @@ ingresa su código y ve solo a quién le toca. Es un sitio estático para GitHub
 usuarios pueden crear un **perfil** (Supabase, link mágico por correo) para guardar listas y **enviar a cada persona su
 link + código por correo** (Edge Function `enviar-correo` con SMTP de Gmail, D20).
 
-La solicitud original y los requerimientos están en `docs/REQUERIMIENTOS.md`. Las decisiones de diseño (D1–D21, con
+La solicitud original y los requerimientos están en `docs/REQUERIMIENTOS.md`. Las decisiones de diseño (D1–D22, con
 alternativas descartadas y amenazas aceptadas) están en `docs/DECISIONES.md`, y el avance en `docs/TAREAS.md` (resumen de lo hecho y lo pendiente en `docs/ESTADO.md`).
-**Al tomar una decisión nueva, agrégala como D22, D23… en `DECISIONES.md`, marca el avance en `TAREAS.md` y actualiza `ESTADO.md`.**
+**Al tomar una decisión nueva, agrégala como D23, D24… en `DECISIONES.md`, marca el avance en `TAREAS.md` y actualiza `ESTADO.md`.**
 Toda la documentación y la UI están en español.
 
 ## Comandos
@@ -47,7 +47,8 @@ y abrir `http://127.0.0.1:8099/amigo-secreto/`.
   - Organizador: formulario, sorteo con progreso, links y códigos por fila, último sorteo en `localStorage`.
   - Participante: código, revelar, freno tras 5 fallos. Agrega una CSP `connect-src 'none'` en tiempo de
     ejecución y oculta `.solo-organizador`.
-  - Expone `window.AmigoSecretoApp` (`vista`, `obtenerFormulario()`, `cargarFormulario(lista)`) y emite el evento
+  - Expone `window.AmigoSecretoApp` (`vista`, `obtenerFormulario()`, `cargarFormulario(lista)`, `limpiar()`: borra el
+    último sorteo y deja el formulario vacío; lo usa "Salir", D22) y emite el evento
     `sorteo-realizado` con **solo** `{participantes: n}`.
   - Correo (D20): cada fila tiene un campo de correo (se guarda solo en `localStorage`) y "✉️ Correo". Llama a
     `window.AmigoSecretoCorreo.enviar([{email,url,codigo}])`, que define `perfil.js`. Los controles solo se ven con

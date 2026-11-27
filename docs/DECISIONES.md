@@ -191,3 +191,17 @@ Detalle en `docs/SEGURIDAD.md` (H1–H5). Decisiones que cambian el comportamien
 - `supabase/correos/*.html` se generan con `npm run correos` (no se editan a mano). El test comprueba que estén
   al día. `npm run correos:vista` genera vistas previas y capturas.
 - Las plantillas se pegan a mano en Supabase (Authentication → Emails).
+
+## D22 — Cerrar sesión limpia el sorteo del navegador (2026-11-27)
+- **Motivo:** al pulsar "Salir" la pantalla seguía mostrando el último sorteo, con sus links, códigos y correos,
+  porque `app.js` lo guarda en `localStorage` sin relación con la sesión. El usuario pidió volver al formulario
+  para armar una lista nueva. También protege a quien use un equipo compartido.
+- **Elegido:**
+  - "Salir" y "Eliminar mi cuenta" llaman a `AmigoSecretoApp.limpiar()`. Esa función borra `amigo-secreto:ultimo`,
+    vacía el formulario (nombres, exclusiones y evento) y vuelve a mostrar el formulario.
+  - Si hay un sorteo en pantalla, "Salir" primero pide confirmar: borrarlo no se puede deshacer y quizá aún no
+    se enviaron todos los links.
+- **No se limpia** cuando la sesión vence sola (token expirado). Solo se limpia por una acción explícita, para no
+  borrar un sorteo por un evento automático.
+- **Descartado:** limpiar también al usar el sitio sin cuenta (el último sorteo sirve para reenviar un link
+  perdido, D6).

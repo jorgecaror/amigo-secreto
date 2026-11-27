@@ -5,7 +5,7 @@
 **Base de datos:** Supabase, proyecto `afrsrmxkgfztevosnjkw` (perfiles, listas y cupo de correos; nunca resultados)
 
 Este archivo es el resumen. El detalle de cada tarea está en [`TAREAS.md`](TAREAS.md) y las decisiones en
-[`DECISIONES.md`](DECISIONES.md) (D1–D21).
+[`DECISIONES.md`](DECISIONES.md) (D1–D22).
 
 ## ✅ Realizado
 
@@ -28,6 +28,7 @@ Este archivo es el resumen. El detalle de cada tarea está en [`TAREAS.md`](TARE
 | Link corto (v3) | De ~970 a ~120–220 caracteres, sin servidor; los links v2 ya enviados siguen funcionando | `sorteo.js`, D19 |
 | Envío por correo | **Funcionando en producción.** Botón al resultado + código, enviado por el sitio (Edge Function + Gmail) solo con sesión y con clic; cupos por usuario y global; WhatsApp igual que antes | `supabase/functions/enviar-correo/`, `app.js`, `perfil.js`, D20 |
 | Diseño de correos | **Aplicado en producción.** Un diseño para el correo del participante y los de login (Magic Link, Confirm signup), claro y oscuro | `supabase/correos/`, D21 |
+| Cerrar sesión | "Salir" avisa si hay un sorteo en pantalla, lo borra del navegador y vuelve al formulario vacío | `app.js`, `perfil.js`, D22 |
 | Publicación | Commits en `main`, GitHub Pages activo, verificado en vivo (páginas, 404, sorteo, revelación, CSP, consola limpia) | D18 |
 
 ## ⏳ Pendiente

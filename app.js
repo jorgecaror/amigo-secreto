@@ -321,6 +321,25 @@
     }
   }
 
+  // Para perfil.js al cerrar sesión o eliminar la cuenta (D22): borra el último sorteo de este navegador y deja el
+  // formulario vacío. Devuelve true si había un sorteo en pantalla.
+  function limpiar() {
+    var habia = !$('resultado').hidden;
+    borrarLS(STORAGE_KEY);
+    $('nombres').value = '';
+    $('ev-monto').value = ''; $('ev-fecha').value = ''; $('ev-lugar').value = ''; $('ev-mensaje').value = '';
+    exclusiones = [];
+    datosActuales = null;
+    filasCorreo = [];
+    $('links').innerHTML = '';
+    mostrarMsgCorreo('');
+    mostrarErrores([]);
+    refrescarExclusiones();
+    $('resultado').hidden = true;
+    $('form-sorteo').hidden = false;
+    return habia;
+  }
+
   function nuevoSorteo() {
     if (!confirm('¿Hacer un nuevo sorteo? Los links y códigos enviados antes dejarán de valer para el nuevo sorteo.')) return;
     var previo = leerLS(STORAGE_KEY);
@@ -465,7 +484,8 @@
   window.AmigoSecretoApp = {
     vista: esLinkParticipante(location.hash.replace(/^#/, '')) ? 'participante' : 'organizador',
     obtenerFormulario: obtenerFormulario,
-    cargarFormulario: cargarFormulario
+    cargarFormulario: cargarFormulario,
+    limpiar: limpiar
   };
   iniciar();
 })();

@@ -84,6 +84,12 @@
 - [x] Prueba real (2026-11-27): sorteo con correos propios desde el sitio publicado → el correo llega, el botón abre el resultado y el código lo revela
 - [x] Plantillas de login aplicadas con `node supabase/correos/aplicar.mjs` (2026-11-27): Magic Link y Confirm signup con diseño nuevo, verificadas por la API
 
+## Fase 8 — Cerrar sesión vuelve al formulario (2026-11-27) — D22
+- [x] `AmigoSecretoApp.limpiar()`: borra el último sorteo del navegador y deja el formulario vacío
+- [x] "Salir" (con aviso si hay un sorteo en pantalla) y "Eliminar mi cuenta" la usan
+- [x] E2E: cancelar el aviso no cambia nada; aceptar deja el formulario vacío y sin `amigo-secreto:ultimo` → **OK**
+- [ ] Usuario: probar "Salir" con sesión real en el sitio publicado
+
 ## Ideas futuras (no comprometidas)
 - [ ] Proveedor de correo transaccional con dominio propio (evita la copia en "Enviados" de Gmail y su límite diario)
 - [ ] Lista de deseos por participante
