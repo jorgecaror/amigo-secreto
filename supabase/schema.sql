@@ -154,6 +154,9 @@ create index if not exists envios_correo_fecha_idx on public.envios_correo (crea
 
 revoke all on public.envios_correo from anon, authenticated;
 grant select, insert (cantidad) on public.envios_correo to authenticated;   -- no se edita ni se borra
+-- La Edge Function suma el cupo GLOBAL (todas las cuentas) con la service_role, que nunca sale de la función.
+-- Explícito: no todos los proyectos de Supabase le dan permisos por defecto en tablas nuevas (error 42501).
+grant select on public.envios_correo to service_role;
 alter table public.envios_correo enable row level security;
 
 drop policy if exists envios_correo_select on public.envios_correo;

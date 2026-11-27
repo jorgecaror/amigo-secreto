@@ -12,6 +12,9 @@ const db = new PGlite();
 // --- Emulación de Supabase: roles, auth.users, auth.uid(), privilegios por defecto ---
 await db.exec(`
   create role anon nologin; create role authenticated nologin;
+  -- service_role SIN permisos por defecto en tablas nuevas (como el proyecto real: daba 42501 si el schema no los otorga).
+  create role service_role nologin bypassrls;
+  grant usage on schema public to service_role;
   create schema auth;
   create table auth.users (id uuid primary key, email text);
   create function auth.uid() returns uuid language sql stable as
@@ -157,6 +160,14 @@ await como('authenticated', B, async () => {
   await falla(q('select public.limitar_envios_correo()'), /permission denied|trigger/, 'llamar trigger de correo');
 });
 console.log('✓ Cupo de correos: 200 en 24 h por usuario, sin fechas falsas, no editable, aislado entre usuarios, anon sin acceso');
+
+// La Edge Function suma el cupo global con la service_role (la consulta exacta de index.ts).
+await como('service_role', null, async () => {
+  const total = (await q(`select coalesce(sum(cantidad),0)::int n from public.envios_correo where creado_en >= now() - interval '24 hours'`)).rows[0].n;
+  assert.equal(total, 300, 'service_role ve el cupo de todas las cuentas (A 200 + B 100)');
+  await falla(q(`insert into public.envios_correo (user_id, cantidad) values ($1, 1)`, [A]), /permission denied/, 'service_role solo lee');
+});
+console.log('✓ service_role puede leer el cupo global (sin depender de permisos por defecto) y no puede escribir');
 
 // --- B crea una lista; A elimina su cuenta ---
 await como('authenticated', B, () => q(`insert into public.listas (nombre, participantes) values ('De B', $1)`, [P]));

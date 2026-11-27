@@ -79,6 +79,8 @@
 - [x] Usuario: `schema.sql` ejecutado, contraseña de aplicación de Gmail, secretos y función desplegada. Verificado (2026-11-27):
       CORS solo para github.io (204/403), clave anon rechazada (401), tabla `envios_correo` creada y sin acceso anon
 - [x] Usuario: plantillas de `supabase/correos/` pegadas en Authentication → Emails
+- [x] Hallazgo en la prueba real: `42501` al leer el cupo global → el proyecto no da permisos por defecto a `service_role`;
+      `schema.sql` ahora hace `grant select on envios_correo to service_role` y `test:rls` lo cubre (sin permisos por defecto)
 - [ ] Prueba real: sorteo de 3 con correos propios (llega, el botón abre, el código revela) y login con la plantilla nueva
 
 ## Ideas futuras (no comprometidas)
