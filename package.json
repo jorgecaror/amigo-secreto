@@ -3,10 +3,14 @@
   "private": true,
   "description": "Sorteo de amigo secreto online: sitio estático + perfiles opcionales con Supabase.",
   "scripts": {
-    "test": "node test/verificar-sorteo.js && node test/verificar-rls.mjs",
+    "test": "node test/verificar-sorteo.js && node test/verificar-correo.mjs && node test/verificar-rls.mjs",
     "test:sorteo": "node test/verificar-sorteo.js",
+    "test:correo": "node test/verificar-correo.mjs",
     "test:rls": "node test/verificar-rls.mjs",
-    "test:e2e": "node test/e2e.mjs"
+    "test:e2e": "node test/e2e.mjs",
+    "correos": "node supabase/correos/generar.mjs",
+    "correos:vista": "node test/vista-correos.mjs",
+    "test:funcion": "node test/verificar-funcion.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.2.17"

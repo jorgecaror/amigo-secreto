@@ -51,6 +51,16 @@ input.codigo-input { text-align: center; text-transform: uppercase; letter-spaci
 .who { font-weight: 600; overflow-wrap: anywhere; }
 .actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .done { color: var(--ok); }
+.err-inline { color: var(--warn); font-size: .9rem; }
+/* Envío por correo (D20): solo cuando perfil.js activa los perfiles. */
+.solo-correo { display: none !important; }
+body.con-correo .correo-bloque.solo-correo { display: block !important; }
+body.con-correo .fila-correo.solo-correo { display: flex !important; }
+.correo-bloque { background: var(--soft); border-radius: 8px; padding: 10px 12px; margin: 12px 0 4px; }
+.correo-bloque button { margin-top: 8px; }
+.fila-correo { gap: 6px; align-items: center; }
+.fila-correo input { flex: 1 1 auto; min-width: 0; padding: 6px 10px; }
+.fila-correo button { flex: 0 0 auto; }
 .center { text-align: center; }
 .reveal-name { font-size: 2.2rem; font-weight: 800; color: var(--accent); margin: 8px 0 16px; overflow-wrap: anywhere; }
 .gift { font-size: 3rem; }

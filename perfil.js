@@ -5,6 +5,8 @@
  *   (?code=...) o si ya hay una sesión guardada.
  * - Se guardan listas (nombres, exclusiones, evento) e historial (fecha + cantidad). NUNCA resultados,
  *   links ni códigos.
+ * - Envío por correo (D20): window.AmigoSecretoCorreo.enviar() pasa link + código a la Edge Function
+ *   `enviar-correo` solo cuando el organizador lo pide; no se guardan.
  */
 (function () {
   'use strict';
@@ -377,6 +379,36 @@
       msg('perfil-msg', textoError(e), true);
     }
   }
+
+  // ---------- Envío por correo (D20) ----------
+  // Única excepción a "links y códigos no salen del navegador": app.js llama a esto solo tras un clic del
+  // organizador. Va a la Edge Function `enviar-correo`, que valida, cuenta el cupo y envía; no guarda nada.
+  // items: [{ email, url, codigo }] -> Promise<[{ ok, error }]>. Rechaza con Error('sin-sesion') si no hay sesión.
+  async function enviarCorreos(items) {
+    if (!usuario && !haySesionGuardada()) throw new Error('sin-sesion');
+    var c = await obtenerCliente();
+    var s = await c.auth.getSession();
+    if (!(s.data && s.data.session)) throw new Error('sin-sesion');
+    var r = await c.functions.invoke('enviar-correo', { body: { items: items } });
+    if (r.error) {
+      var detalle = null;
+      try { detalle = await r.error.context.json(); } catch (e) { /* sin cuerpo JSON */ }
+      console.warn('[perfil] enviar-correo', r.error);
+      if (detalle && typeof detalle.error === 'string') throw new Error(detalle.error);
+      throw new Error('No se pudo enviar. Revisa tu conexión e intenta de nuevo.');
+    }
+    var res = r.data && r.data.resultados;
+    if (!Array.isArray(res)) throw new Error('No se pudo enviar. Intenta de nuevo.');
+    return res;
+  }
+
+  function pedirLogin() {
+    $('btn-login').click();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  window.AmigoSecretoCorreo = Object.freeze({ enviar: enviarCorreos, pedirLogin: pedirLogin });
+  document.body.classList.add('con-correo');
 
   // ---------- Inicio ----------
   $('barra-sesion').hidden = false;

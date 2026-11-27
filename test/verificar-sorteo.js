@@ -92,26 +92,36 @@ assert.ok(S.validarNombres('Ana\nBeto\n' + 'x'.repeat(61)).errores[0].includes('
   assert.strictEqual(S.normalizarCodigo('K7P-Q2M'), 'K7PQ2M');
 }
 
-// 8) Cifrado del link (async).
+// 8) Cifrado del link (async). Formato v3 (D19) y compatibilidad con v2 (D10/D17).
 async function probarCifrado() {
   const evento = { monto: '$15.000', fecha: '2026-12-20', lugar: 'Casa de la Abuela', mensaje: '¡Ñam!' };
+  const nombres = ['Sofía', 'Ñandú', 'Ana'];
+  const relleno = S.rellenoPara(nombres);
   const codigo = S.generarCodigo();
-  const h1 = await S.codificar({ da: 'Sofía', recibe: 'Ñandú', evento }, codigo);
-  const h2 = await S.codificar({ da: 'Sofía', recibe: 'Ñandú', evento }, codigo);
+  const h1 = await S.codificar({ da: 'Sofía', recibe: 'Ñandú', evento }, codigo, { relleno });
+  const h2 = await S.codificar({ da: 'Sofía', recibe: 'Ñandú', evento }, codigo, { relleno });
   assert.notStrictEqual(h1, h2, 'el link debe variar (salt/iv)');
-  assert.ok(/^2\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(h1), 'formato 2.<pub>.<cifrado>');
+  assert.ok(/^3\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(h1), 'formato 3.<da>.<cifrado>: ' + h1);
 
   // La parte pública solo trae quién regala; receptor y evento no aparecen en claro.
   const pub = S.leerPublico('#' + h1);
-  assert.strictEqual(pub.da, 'Sofía');
+  assert.strictEqual(pub.da, 'Sofía'); assert.strictEqual(pub.version, 3);
   const pubTexto = Buffer.from(h1.split('.')[1], 'base64url').toString('utf8');
-  ['Ñandú', 'Abuela', '15.000', 'Ñam'].forEach((x) => assert.ok(!pubTexto.includes(x), 'fuga en claro: ' + x));
+  assert.strictEqual(pubTexto, 'Sofía');
   const crudo = Buffer.from(h1.split('.')[2], 'base64url').toString('latin1');
   ['and', 'Abuela', '15.000'].forEach((x) => assert.ok(!crudo.includes(x), 'fuga en cifrado: ' + x));
 
   // Código correcto (en cualquier formato) descifra.
   assert.deepStrictEqual(await S.decodificar('#' + h1, codigo), { da: 'Sofía', recibe: 'Ñandú', evento });
   assert.deepStrictEqual(await S.decodificar(h1, codigo.toLowerCase().replace('-', ' ')), { da: 'Sofía', recibe: 'Ñandú', evento });
+  // Sin evento y con evento parcial.
+  const sinEv = await S.codificar({ da: 'Ana', recibe: 'Sofía', evento: {} }, codigo, { relleno });
+  assert.deepStrictEqual(await S.decodificar(sinEv, codigo), { da: 'Ana', recibe: 'Sofía', evento: {} });
+  const parcial = await S.codificar({ da: 'Ana', recibe: 'Sofía', evento: { lugar: 'Plaza' } }, codigo, { relleno });
+  assert.deepStrictEqual(await S.decodificar(parcial, codigo), { da: 'Ana', recibe: 'Sofía', evento: { lugar: 'Plaza' } });
+  // Sin `relleno` usa el peor caso y también funciona.
+  const sinRelleno = await S.codificar({ da: 'Ana', recibe: 'Sofía', evento }, codigo);
+  assert.deepStrictEqual(await S.decodificar(sinRelleno, codigo), { da: 'Ana', recibe: 'Sofía', evento });
 
   // Código incorrecto -> null.
   let otro = S.generarCodigo();
@@ -120,27 +130,54 @@ async function probarCifrado() {
   assert.strictEqual(await S.decodificar(h1, ''), null);
 
   // Nombre alterado (AAD) -> null, aun con el código correcto.
-  const pubFalso = Buffer.from(JSON.stringify({ v: 2, d: 'Intruso', i: 600000 })).toString('base64url');
-  const alterado = ['2', pubFalso, h1.split('.')[2]].join('.');
+  const alterado = ['3', Buffer.from('Intruso').toString('base64url'), h1.split('.')[2]].join('.');
   assert.strictEqual(S.leerPublico(alterado).da, 'Intruso');
   assert.strictEqual(await S.decodificar(alterado, codigo), null);
+  // Cambiar la versión (3 -> 2 o al revés) tampoco sirve.
+  assert.strictEqual(await S.decodificar('2' + h1.slice(1), codigo), null);
 
-  // Relleno: links del mismo sorteo con receptores de largos muy distintos miden lo mismo.
+  // Relleno (H1): links de un mismo sorteo con receptores de largos muy distintos miden lo mismo.
+  const receptores = ['Al', 'Ñandú', 'Maximiliano Alejandro de la Fuente', '😀'.repeat(30), '"\\'.repeat(30), '\u0001'.repeat(60), '漢'.repeat(60)];
+  const P = S.rellenoPara(receptores);
+  assert.ok(P <= 180, 'relleno máximo 180: ' + P);
   const largos = new Set();
-  for (const r of ['Al', 'Ñandú', 'Maximiliano Alejandro de la Fuente', '😀'.repeat(60), '"\\'.repeat(30), '\u0001'.repeat(60)]) {
-    largos.add((await S.codificar({ da: 'Sofía', recibe: r, evento }, codigo)).length);
+  for (const r of receptores) {
+    const h = await S.codificar({ da: 'Sofía', recibe: r, evento }, codigo, { relleno: P });
+    largos.add(h.length);
+    assert.strictEqual((await S.decodificar(h, codigo)).recibe, r);
   }
   assert.strictEqual(largos.size, 1, 'el largo del link no debe depender del receptor: ' + [...largos]);
-  await assert.rejects(S.codificar({ da: 'X', recibe: '\u0001'.repeat(100), evento }, codigo));
+  await assert.rejects(S.codificar({ da: 'X', recibe: 'Maximiliano', evento }, codigo, { relleno: 4 }), 'receptor más largo que el relleno');
 
-  // Iteraciones fuera de rango o basura -> inválido.
+  // Largo del link: base de GitHub Pages + hash.
+  const BASE = 'https://jorgecaror.github.io/amigo-secreto/#';
+  const corto = (BASE + await S.codificar({ da: 'Sofía', recibe: 'Ana', evento: {} }, codigo, { relleno: S.rellenoPara(['Sofía', 'Ana', 'Maximiliano']) })).length;
+  const conEvento = (BASE + h1).length;
+  assert.ok(corto < 160, 'link sin evento < 160: ' + corto);
+  assert.ok(conEvento < 260, 'link con evento < 260: ' + conEvento);
+
+  // Compatibilidad: los links v2 ya enviados se siguen leyendo.
+  const v2 = await S._codificarV2({ da: 'Sofía', recibe: 'Ñandú', evento }, codigo);
+  assert.ok(/^2\./.test(v2));
+  assert.strictEqual(S.leerPublico(v2).version, 2);
+  assert.deepStrictEqual(await S.decodificar('#' + v2, codigo), { da: 'Sofía', recibe: 'Ñandú', evento });
+  assert.strictEqual(await S.decodificar(v2, otro), null);
+  const v2Largo = (BASE + v2).length;
+  const pubFalso = Buffer.from(JSON.stringify({ v: 2, d: 'Intruso', i: 600000 })).toString('base64url');
+  assert.strictEqual(await S.decodificar(['2', pubFalso, v2.split('.')[2]].join('.'), codigo), null);
   const pubDebil = Buffer.from(JSON.stringify({ v: 2, d: 'Sofía', i: 1 })).toString('base64url');
-  assert.strictEqual(S.leerPublico(['2', pubDebil, h1.split('.')[2]].join('.')), null);
+  assert.strictEqual(S.leerPublico(['2', pubDebil, v2.split('.')[2]].join('.')), null);
+
+  // Basura -> inválido.
   assert.strictEqual(S.leerPublico('#basura'), null);
   assert.strictEqual(S.leerPublico(''), null);
+  assert.strictEqual(S.leerPublico('3..abc'), null);
+  assert.strictEqual(S.leerPublico('4.' + h1.slice(2)), null);
   assert.strictEqual(await S.decodificar('#basura', codigo), null);
+  return { corto, conEvento, v2Largo };
 }
 
-probarCifrado().then(() => {
+probarCifrado().then((l) => {
   console.log('OK — ' + total + ' sorteos verificados, casos imposibles, uniformidad, nombres, códigos y cifrado AES-GCM.');
+  console.log('     Largo del link v3: ' + l.corto + ' (sin evento) / ' + l.conEvento + ' (con evento) caracteres; v2: ' + l.v2Largo + '.');
 }).catch((e) => { console.error(e); process.exit(1); });

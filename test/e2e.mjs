@@ -71,12 +71,15 @@ try {
     while(!localStorage.getItem('amigo-secreto:ultimo')) await new Promise(r=>setTimeout(r,50));
     const d=JSON.parse(localStorage.getItem('amigo-secreto:ultimo'));
     return { evento, link:d.links[0].url, codigo:d.links[0].codigo, n:d.links.length,
+      correoOculto: getComputedStyle(document.querySelector('.correo-bloque')).display==='none' && getComputedStyle(document.querySelector('.fila-correo')).display==='none',
       api: typeof window.AmigoSecretoApp.obtenerFormulario, cargarConResultado: window.AmigoSecretoApp.cargarFormulario({participantes:['x','y','z']}) };`);
   assert.deepEqual(org.evento, { participantes: 4 }, 'evento sorteo-realizado solo con la cantidad');
   assert.equal(org.cargarConResultado, false, 'no carga lista con sorteo en pantalla');
+  assert.ok(org.correoOculto, 'sin config: controles de correo ocultos');
+  assert.match(org.link, /#3\./, 'link v3'); assert.ok(org.link.length < 200, 'link corto: ' + org.link.length);
   assert.deepEqual(externas(), [], 'sin requests externos: ' + externas());
   assert.deepEqual(consola, [], 'consola limpia: ' + consola);
-  ok('Sorteo OK; evento "sorteo-realizado" = {participantes: 4}; 0 requests externos; consola limpia');
+  ok('Sorteo OK; link v3 de ' + org.link.length + ' caracteres; evento "sorteo-realizado" = {participantes: 4}; sin controles de correo; 0 requests externos; consola limpia');
 
   // ===== 2. Participante: sin red =====
   await ir(org.link);
@@ -93,7 +96,21 @@ try {
   assert.deepEqual(externas().filter((u) => !u.includes('supabase.co/rest')), []);
   ok('Participante: revela; CSP extra bloquea incluso supabase.co; sin contenido SEO ni barra; Supabase no se carga');
 
-  // ===== 3. Hash que no es "2." → organizador =====
+  // ===== 2b. Link v2 (enviado antes de D19) se sigue revelando =====
+  await ir(BASE + 'index.html');
+  const v2 = await evaluar(`return await Sorteo._codificarV2({da:'Beto', recibe:'Caro', evento:{lugar:'Casa'}}, 'K7P-Q2M');`);
+  await ir(BASE + 'index.html#' + v2);
+  const partV2 = await evaluar(`
+    const $=id=>document.getElementById(id);
+    const nombre=$('p-nombre').textContent;
+    $('p-codigo').value='k7p q2m'; $('p-form').requestSubmit();
+    while(!$('p-recibe').textContent) await new Promise(r=>setTimeout(r,50));
+    return { nombre, recibe:$('p-recibe').textContent, evento:$('p-evento').textContent };`);
+  assert.deepEqual(partV2, { nombre: 'Beto', recibe: 'Caro', evento: '📍 LugarCasa' });
+  assert.deepEqual(externas(), []);
+  ok('Link v2 antiguo: se sigue revelando con su código');
+
+  // ===== 3. Hash que no es "2." ni "3." → organizador =====
   await ir(BASE + 'index.html#access_token=abc&type=magiclink');
   const ruta = await evaluar(`return { org: !document.getElementById('vista-organizador').hidden, part: !document.getElementById('vista-participante').hidden };`);
   assert.deepEqual(ruta, { org: true, part: false });
@@ -128,7 +145,7 @@ try {
     const trasConCodigo={abiertos:abiertos.slice(), copiadoTieneCodigo:(copiado||'').includes(d.links[0].codigo), texto:botones.find(b=>b.textContent.includes('Copiado'))?.textContent};
     botones.find(b=>b.textContent.includes('Solo link')).click(); await new Promise(r=>setTimeout(r,200));
     return {urls:d.links.map(l=>l.url), trasConCodigo, waSolo:abiertos[0]||'', codigo:d.links[0].codigo};`);
-  assert.ok(comp.urls.every((u) => !u.includes('?') && u.startsWith(BASE + 'index.html#2.')), 'links sin query: ' + comp.urls[0]);
+  assert.ok(comp.urls.every((u) => !u.includes('?') && u.startsWith(BASE + 'index.html#3.')), 'links sin query: ' + comp.urls[0]);
   assert.deepEqual(comp.trasConCodigo.abiertos, [], '"Link + código" no abre wa.me');
   assert.ok(comp.trasConCodigo.copiadoTieneCodigo, 'copia el mensaje con el código');
   assert.ok(comp.waSolo.startsWith('https://wa.me/?text=') && !decodeURIComponent(comp.waSolo).includes(comp.codigo), '"Solo link" abre wa.me sin código');
@@ -144,6 +161,8 @@ try {
       const metodo=(o.method||'GET').toUpperCase(); let h={}; try{ h=o.headers instanceof Headers?Object.fromEntries(o.headers):(o.headers||{}); }catch(e){}
       window.__llamadas.push({url,metodo,body:o.body,headers:h});
       const uno=/vnd\\.pgrst\\.object/.test(h.Accept||h.accept||'');
+      if(url.includes('/functions/v1/enviar-correo')){ const items=JSON.parse(o.body).items;
+        return resp({resultados:items.map(it=>it.email.startsWith('falla')?{ok:false,error:'No se pudo enviar a este correo.'}:{ok:true})}); }
       const m=url.match(/\\/rest\\/v1\\/(listas|sorteos)/);
       if(m){ const t=m[1];
         if(metodo==='GET') return resp(db[t]);
@@ -179,6 +198,27 @@ try {
   assert.ok(cspCfg.some((u) => u.includes('otroproyectoatacante')), 'bloquea otros proyectos supabase');
   ok('CSP con config: solo el proyecto exacto de config.js; otro *.supabase.co bloqueado');
 
+  // ===== 5a. Correo sin sesión: pide iniciar sesión y no envía nada =====
+  await evaluar(`try{localStorage.clear()}catch(e){} return true;`);
+  await ir(BASE + 'index.html');
+  const sinSesion = await evaluar(`
+    const $=id=>document.getElementById(id);
+    $('nombres').value='Ana\\nBeto\\nCaro'; $('nombres').dispatchEvent(new Event('input')); $('btn-sortear').click();
+    while(!localStorage.getItem('amigo-secreto:ultimo')) await new Promise(r=>setTimeout(r,50));
+    const visible=getComputedStyle(document.querySelector('.correo-bloque')).display!=='none';
+    const fila=document.querySelectorAll('#links li')[0];
+    const input=fila.querySelector('input[type=email]'); input.value='ana@ejemplo.cl'; input.dispatchEvent(new Event('change'));
+    [...fila.querySelectorAll('button')].find(b=>b.textContent.includes('Correo')).click();
+    for(let i=0;i<60 && !/sesión/.test($('correo-msg').textContent);i++) await new Promise(r=>setTimeout(r,50));
+    const d=JSON.parse(localStorage.getItem('amigo-secreto:ultimo'));
+    return { visible, msg:$('correo-msg').textContent, login:!$('login-card').hidden, email:d.links[0].email,
+      llamadas: window.__llamadas.filter(l=>l.url.includes('/functions/')).length };`);
+  assert.ok(sinSesion.visible, 'con config: controles de correo visibles');
+  assert.match(sinSesion.msg, /iniciar sesión/); assert.ok(sinSesion.login, 'abre el login');
+  assert.equal(sinSesion.email, 'ana@ejemplo.cl', 'el correo queda guardado en el navegador');
+  assert.equal(sinSesion.llamadas, 0, 'sin sesión no llama a la función');
+  ok('Correo sin sesión: pide iniciar sesión, no llama a la función y guarda el correo escrito');
+
   // ===== 5b. Sesión simulada: guardar lista, sortear, perfil, salir =====
   await evaluar(`
     const b64=o=>btoa(JSON.stringify(o)).replace(/=+$/,'');
@@ -206,6 +246,19 @@ try {
     out.bodySorteo=JSON.parse(window.__llamadas.find(l=>l.url.includes('/rest/v1/sorteos')&&l.metodo==='POST').body);
     const todo=JSON.stringify(window.__llamadas.map(l=>[l.url,l.body]));
     out.fuga=d.links.some(l=>todo.includes(l.codigo)||todo.includes(l.url.split('#')[1].slice(0,40)));
+    // Envío por correo: solo al hacer clic, solo las filas con correo, y nada de esto va a rest/v1.
+    out.funcionesAntes=window.__llamadas.filter(l=>l.url.includes('/functions/')).length;
+    const filas=[...document.querySelectorAll('#links li')];
+    const poner=(i,v)=>{const x=filas[i].querySelector('input[type=email]'); x.value=v; x.dispatchEvent(new Event('change'));};
+    poner(0,'ana@ejemplo.cl'); poner(2,'falla@ejemplo.cl');
+    $('btn-correo-todos').click();
+    await esperar(()=>/fallaron/.test($('correo-msg').textContent));
+    const llamadaCorreo=window.__llamadas.filter(l=>l.url.includes('/functions/v1/enviar-correo'));
+    out.correo={ n:llamadaCorreo.length, metodo:llamadaCorreo[0].metodo, auth:/^Bearer ey/.test(llamadaCorreo[0].headers.Authorization||llamadaCorreo[0].headers.authorization||''),
+      items:JSON.parse(llamadaCorreo[0].body).items, links:[d.links[0],d.links[2]].map(l=>({url:l.url,codigo:l.codigo})),
+      msg:$('correo-msg').textContent, estados:filas.map(f=>f.querySelector('.fila-top > span > span:last-child').textContent) };
+    const rest=JSON.stringify(window.__llamadas.filter(l=>l.url.includes('/rest/v1/')).map(l=>[l.url,l.body]));
+    out.fugaRest=d.links.some(l=>rest.includes(l.codigo)||rest.includes(l.url.split('#')[1].slice(0,40)))||rest.includes('ejemplo.cl');
     $('btn-perfil').click(); await esperar(()=>$('perfil-historial').textContent.length>0);
     out.tablaPerfil=$('perfil-listas').innerText.replace(/\\s+/g,' ').trim(); out.historial=$('perfil-historial').innerText.replace(/\\s+/g,' ').trim();
     $('btn-salir').click(); await esperar(()=>!$('btn-login').hidden);
@@ -215,10 +268,19 @@ try {
   assert.deepEqual(flujo.bodyLista, { nombre: 'Familia', participantes: ['Ana', 'Beto', 'Caro', 'Dani'], exclusiones: [['Ana', 'Beto']], evento: { lugar: 'Casa' } });
   assert.ok(flujo.opciones.includes('Familia (4)')); assert.ok(flujo.segundoGuardadoEsPatch, 'guardar de nuevo actualiza');
   assert.deepEqual(flujo.bodySorteo, { lista_id: 'id-1', participantes: 4 }); assert.equal(flujo.fuga, false);
+  assert.equal(flujo.funcionesAntes, 0, 'nada va a la función sin clic');
+  assert.equal(flujo.correo.n, 1); assert.equal(flujo.correo.metodo, 'POST'); assert.ok(flujo.correo.auth, 'con el JWT del usuario');
+  assert.deepEqual(flujo.correo.items, [
+    { email: 'ana@ejemplo.cl', url: flujo.correo.links[0].url, codigo: flujo.correo.links[0].codigo },
+    { email: 'falla@ejemplo.cl', url: flujo.correo.links[1].url, codigo: flujo.correo.links[1].codigo }], 'solo filas con correo');
+  assert.match(flujo.correo.msg, /Se enviaron 1 correo\(s\); 1 fallaron/);
+  assert.equal(flujo.correo.estados[0], '✓ correo enviado'); assert.match(flujo.correo.estados[2], /No se pudo enviar/); assert.equal(flujo.correo.estados[1], '');
+  assert.equal(flujo.fugaRest, false, 'links, códigos y correos nunca van a rest/v1');
   assert.match(flujo.tablaPerfil, /Familia 4/); assert.match(flujo.historial, /Familia · 4 personas|Familia.*4 personas/);
   assert.deepEqual(flujo.trasSalir, { misListas: true, panel: true, sesion: null });
   assert.deepEqual(consola, [], 'consola: ' + consola);
   ok('Perfil con sesión: guarda lista (POST), re-guarda (PATCH), historial = {lista_id, participantes:4}, 0 fugas de links/códigos, perfil y salir OK');
+  ok('Correo con sesión: 1 POST a la función solo al hacer clic, con JWT, solo filas con correo; estados por fila; nada a rest/v1');
 
   // ===== 5c. Link de login vencido: Supabase vuelve con #error=… =====
   await evaluar(`try{localStorage.clear()}catch(e){} return true;`);

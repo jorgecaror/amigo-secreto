@@ -107,11 +107,13 @@
     // Sin query (?utm, ?code=…) ni hash: solo origen + ruta (SEGURIDAD.md H5). Vale también para file://.
     var base = location.href.split(/[?#]/)[0];
     var links = [];
+    // Relleno común a todos los links del sorteo (D19): el largo del link no depende del receptor.
+    var relleno = Sorteo.rellenoPara(v.nombres);
     try {
       for (var i = 0; i < res.length; i++) {
         btn.textContent = '🔒 Cifrando ' + (i + 1) + ' de ' + res.length + '…';
         var codigo = Sorteo.generarCodigo();
-        var hash = await Sorteo.codificar({ da: res[i].da, recibe: res[i].recibe, evento: evento }, codigo);
+        var hash = await Sorteo.codificar({ da: res[i].da, recibe: res[i].recibe, evento: evento }, codigo, { relleno: relleno });
         links.push({ nombre: res[i].da, url: base + '#' + hash, codigo: codigo, enviado: false });
       }
     } catch (e) {
@@ -165,9 +167,20 @@
       (datos.exclusiones.length ? ' · ' + datos.exclusiones.length + ' exclusión(es)' : '');
     var ul = $('links');
     ul.innerHTML = '';
+    datosActuales = datos;
+    filasCorreo = [];
+    mostrarMsgCorreo('');
+    $('btn-correo-todos').onclick = function () {
+      var pendientes = filasCorreo.filter(function (f) { return f.leerEmail(); });
+      if (!pendientes.length) return mostrarMsgCorreo('Escribe el correo de al menos una persona.', true);
+      enviarPorCorreo(pendientes);
+    };
     datos.links.forEach(function (l) {
-      var estado = el('span', { class: 'done', text: l.enviado ? '✓ enviado' : '' });
-      var marcar = function () { l.enviado = true; estado.textContent = '✓ enviado'; escribirLS(STORAGE_KEY, datos); };
+      var estado = el('span', { class: 'done', text: l.correoEnviado ? '✓ correo enviado' : l.enviado ? '✓ enviado' : '' });
+      var marcar = function (texto) {
+        l.enviado = true; estado.className = 'done'; estado.textContent = texto || '✓ enviado';
+        escribirLS(STORAGE_KEY, datos);
+      };
 
       function botonCopiar(etiqueta, valor, queEs) {
         var b = el('button', { type: 'button', text: etiqueta });
@@ -209,6 +222,30 @@
       var msgConCodigo = 'Hola ' + l.nombre + '! 🎁 Este es tu link del amigo secreto: ' + l.url +
         '\n\nTu código es: ' + l.codigo + '\nNo compartas este mensaje con nadie.';
 
+      // Correo (D20): el correo de cada persona queda solo en este navegador (localStorage), nunca en la base.
+      var inputEmail = el('input', { type: 'email', class: 'correo-input', maxlength: '254', autocomplete: 'off',
+        placeholder: 'Correo de ' + l.nombre + ' (opcional)', 'aria-label': 'Correo de ' + l.nombre });
+      inputEmail.value = l.email || '';
+      inputEmail.addEventListener('change', function () {
+        var v = inputEmail.value.trim();
+        if (v) l.email = v; else delete l.email;
+        escribirLS(STORAGE_KEY, datos);
+      });
+      var botonCorreo = el('button', { type: 'button', text: '✉️ Correo' });
+      var fila = {
+        link: l, boton: botonCorreo, input: inputEmail,
+        leerEmail: function () { return inputEmail.value.trim(); },
+        resultado: function (ok, error) {
+          if (ok) { l.correoEnviado = true; marcar('✓ correo enviado'); return; }
+          estado.className = 'err-inline'; estado.textContent = '⚠️ ' + (error || 'No se pudo enviar');
+        }
+      };
+      filasCorreo.push(fila);
+      botonCorreo.onclick = function () {
+        if (!fila.leerEmail()) { inputEmail.focus(); return mostrarMsgCorreo('Escribe el correo de ' + l.nombre + '.', true); }
+        enviarPorCorreo([fila]);
+      };
+
       ul.appendChild(el('li', {}, [
         el('div', { class: 'fila-top' }, [
           el('span', {}, [el('span', { class: 'who', text: l.nombre + ' ' }), estado]),
@@ -219,9 +256,69 @@
           botonCopiar('📋 Código', l.codigo, 'el código'),
           botonCompartir('💬 Solo link', msgSoloLink, false),
           botonCompartir('💬 Link + código', msgConCodigo, true)
-        ])
+        ]),
+        el('div', { class: 'fila-correo solo-correo' }, [inputEmail, botonCorreo])
       ]));
     });
+  }
+
+  // ---------- Envío por correo (D20) ----------
+  // app.js no habla con Supabase: usa window.AmigoSecretoCorreo, que define perfil.js solo si hay config.
+  // Los links y códigos salen del navegador únicamente aquí, tras un clic explícito del organizador.
+  var filasCorreo = [];
+  var datosActuales = null;
+  var LOTE_CORREO = 10;
+  var enviandoCorreo = false;
+
+  function mostrarMsgCorreo(texto, esError) {
+    var m = $('correo-msg');
+    m.textContent = texto || '';
+    m.hidden = !texto;
+    m.className = esError ? 'err' : 'hint';
+  }
+
+  async function enviarPorCorreo(filas) {
+    var api = window.AmigoSecretoCorreo;
+    if (!api || enviandoCorreo) return;
+    var malos = filas.filter(function (f) { return !/^[^\s@,;<>"]+@[^\s@,;<>"]+\.[^\s@,;<>"]+$/.test(f.leerEmail()); });
+    if (malos.length) {
+      malos[0].input.focus();
+      return mostrarMsgCorreo('Revisa el correo de ' + malos.map(function (f) { return f.link.nombre; }).join(', ') + '.', true);
+    }
+    filas.forEach(function (f) { f.link.email = f.leerEmail(); });
+    enviandoCorreo = true;
+    var botones = filasCorreo.map(function (f) { return f.boton; }).concat([$('btn-correo-todos')]);
+    botones.forEach(function (b) { b.disabled = true; });
+    var enviados = 0, fallidos = 0;
+    try {
+      for (var i = 0; i < filas.length; i += LOTE_CORREO) {
+        var lote = filas.slice(i, i + LOTE_CORREO);
+        mostrarMsgCorreo('✉️ Enviando ' + (i + 1) + '–' + (i + lote.length) + ' de ' + filas.length + '…');
+        var res = await api.enviar(lote.map(function (f) {
+          return { email: f.link.email, url: f.link.url, codigo: f.link.codigo };
+        }));
+        lote.forEach(function (f, k) {
+          var r = res[k] || {};
+          f.resultado(!!r.ok, r.error);
+          if (r.ok) enviados++; else fallidos++;
+        });
+      }
+      mostrarMsgCorreo(fallidos
+        ? 'Se enviaron ' + enviados + ' correo(s); ' + fallidos + ' fallaron. Revisa esos correos e intenta de nuevo.'
+        : '✓ ' + (enviados === 1 ? 'Correo enviado.' : 'Se enviaron ' + enviados + ' correos.') + ' Pide que revisen también la carpeta de spam.', !!fallidos);
+    } catch (e) {
+      if (e && e.message === 'sin-sesion') {
+        mostrarMsgCorreo('Para enviar por correo tienes que iniciar sesión (es gratis y sin contraseña). Tus correos escritos quedan guardados.', true);
+        if (api.pedirLogin) api.pedirLogin();
+      } else {
+        mostrarMsgCorreo((enviados ? 'Se enviaron ' + enviados + ' correo(s), pero ' : '') +
+          ((e && e.message) || 'No se pudo enviar. Intenta de nuevo.'), true);
+      }
+    } finally {
+      enviandoCorreo = false;
+      botones.forEach(function (b) { b.disabled = false; });
+      if (datosActuales) escribirLS(STORAGE_KEY, datosActuales);
+    }
   }
 
   function nuevoSorteo() {
@@ -256,7 +353,7 @@
 
   // ======================= PARTICIPANTE =======================
   // Freno de interfaz ante intentos repetidos (la protección real es PBKDF2 + código).
-  function claveIntentos(pub) { return 'amigo-secreto:intentos:' + pub.publicoB64.slice(0, 32); }
+  function claveIntentos(pub) { return 'amigo-secreto:intentos:' + pub.id; }
 
   function esperaRestante(estado) {
     return estado && estado.hasta ? Math.max(0, estado.hasta - Date.now()) : 0;
@@ -354,8 +451,8 @@
     actualizarBloqueo();
   }
 
-  // Solo los hash "2.<...>" son links de participante; cualquier otro hash se ignora.
-  function esLinkParticipante(hash) { return /^2\./.test(hash); }
+  // Solo los hash "3.<...>" (D19) y "2.<...>" (links enviados antes) son de participante; cualquier otro se ignora.
+  function esLinkParticipante(hash) { return /^[23]\./.test(hash); }
 
   function iniciar() {
     var hash = location.hash.replace(/^#/, '');

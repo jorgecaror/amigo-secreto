@@ -1,0 +1,59 @@
+<!doctype html>
+<!-- Generado por supabase/correos/generar.mjs: no editar a mano.
+     Asunto: 🔑 Tu link para entrar a Amigo Secreto -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>Entrar a Amigo Secreto</title>
+<style>
+  @media (prefers-color-scheme: dark) {
+    .fondo { background:#16181b !important; }
+    .tarjeta { background:#1f2226 !important; border-color:#33373d !important; }
+    .texto { color:#e8e6e3 !important; }
+    .suave { color:#a0a6ad !important; }
+    .caja { background:#272a2f !important; border-color:#33373d !important; }
+    .codigo { color:#ffffff !important; }
+  }
+  @media (max-width: 600px) { .pad { padding:24px 20px !important; } }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#f6f3ee" class="fondo">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">Tu link para iniciar sesión. Vence en 1 hora.</div>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" class="fondo" style="background:#f6f3ee">
+<tr><td align="center" style="padding:28px 12px">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px">
+    <tr><td align="center" style="padding:0 0 14px;font:800 20px/1.2 -apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#b3261e">🎁 Amigo Secreto</td></tr>
+    <tr><td class="tarjeta" style="background:#ffffff;border:1px solid #e3ddd3;border-radius:16px;overflow:hidden">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+        <tr><td style="height:6px;background:#b3261e;font-size:0;line-height:0">&nbsp;</td></tr>
+        <tr><td class="pad texto" style="padding:32px 36px;font:16px/1.55 -apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1f2328">
+<h1 class="texto" style="margin:0 0 12px;font-size:24px;line-height:1.25;color:#1f2328">Tu link para entrar 🔑</h1>
+<p class="texto" style="margin:0 0 16px;">Toca el botón para iniciar sesión en Amigo Secreto. No necesitas contraseña.</p>
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:8px auto 4px">
+  <tr><td align="center" bgcolor="#b3261e" style="border-radius:10px">
+    <a href="{{ .ConfirmationURL }}" target="_blank" class="boton" style="display:inline-block;padding:15px 30px;font:700 17px/1.2 -apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#ffffff;text-decoration:none;border-radius:10px;background:#b3261e">Iniciar sesión</a>
+  </td></tr>
+</table>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:22px 0 4px">
+  <tr><td class="caja" style="background:#f1ece4;border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.5;color:#1f2328">
+    <span class="texto">📱 <strong>Ábrelo en el mismo navegador</strong> donde lo pediste (por seguridad no funciona en otro).<br>
+    ⏱️ El link vence en 1 hora y sirve una sola vez.</span>
+  </td></tr>
+</table>
+<p class="suave" style="margin:20px 0 0;font-size:13px;color:#646b73">¿No funciona el botón? Copia este link en tu navegador:<br>
+<a href="{{ .ConfirmationURL }}" style="color:#b3261e;word-break:break-all">{{ .ConfirmationURL }}</a></p>
+        </td></tr>
+      </table>
+    </td></tr>
+    <tr><td class="suave" align="center" style="padding:18px 16px 0;font:12px/1.5 -apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#646b73">
+      Si no pediste este correo, ignóralo: nadie podrá entrar sin abrir este link.<br>
+      <a href="https://jorgecaror.github.io/amigo-secreto/" style="color:#646b73">Amigo Secreto</a> · <a href="https://jorgecaror.github.io/amigo-secreto/privacidad.html" style="color:#646b73">Privacidad</a>
+    </td></tr>
+  </table>
+</td></tr>
+</table>
+</body>
+</html>

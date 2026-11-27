@@ -45,6 +45,26 @@ ni bypass de RLS.
 - "Solo link" por `wa.me` (sin `navigator.share`) envía el link sin código a Meta. Sin el código no se puede
   descifrar y, con H1 corregido, tampoco revela el largo del nombre.
 
+## Cambios posteriores — 2026-11-27 (D19, D20)
+- **Link v3 (D19):** el relleno pasa a ser el nombre más largo del sorteo. H1 se mantiene: todos los links de un
+  sorteo miden lo mismo, y `test:sorteo` lo prueba con nombres de 2 a 60 caracteres, emojis y CJK. AAD con versión y
+  nombre: cambiar `3.` por `2.` o el nombre invalida el link.
+- **Envío por correo (D20).** Es la nueva superficie y es **opt-in**: solo con sesión y con un clic.
+  - **Phishing/spam:** la función solo acepta URLs `SITIO_URLS` + `#2.|#3.` con base64url. El nombre lo saca del
+    link y no del cliente, y los correos se validan (sin `,;<>` ni CR/LF). Lo prueba `test:correo`.
+  - **Autenticación:** `auth.getUser(jwt)`. La clave anon no pasa.
+  - **Abuso de volumen:** 100 por llamada, 200 por usuario en 24 h (trigger `security invoker` + advisory lock,
+    sin permiso para fijar `creado_en`) y 450 globales en 24 h. Lo prueba `test:rls`.
+  - **CORS:** solo `ORIGENES`.
+  - **XSS en el correo:** todo lo variable pasa por `escaparHtml`.
+  - **Logs:** sin correos, links ni códigos.
+  - **Minimización:** a `rest/v1` nunca llegan links, códigos ni correos (lo verifica el E2E). La función no
+    guarda nada.
+- **Riesgos aceptados nuevos (D20):**
+  - La copia en "Enviados" de la cuenta Gmail del SMTP incluye link + código.
+  - El reenvío del correo completo expone el resultado.
+  - Dependencia del límite y de las políticas de Gmail.
+
 ## Pendiente al publicar
 - Crear el remoto en GitHub para poder usar `/security-review` en los próximos cambios.
 - En Supabase: Redirect URLs exactas, SMTP propio y rate limits (`docs/SUPABASE-SETUP.md`).

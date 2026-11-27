@@ -62,6 +62,26 @@
 - [ ] Probar login desde el sitio publicado
 - [ ] Probar un link real desde el celular (abrir, revelar, WhatsApp)
 
+## Fase 7 — Correo, link corto y correos de login (2026-11-27) — D19, D20, D21
+- [x] Link v3 compacto (`sorteo.js`): relleno al nombre más largo, texto binario, iteraciones implícitas →
+      ~120–220 caracteres (antes ~970). Los links v2 se siguen leyendo (test + E2E)
+- [x] Edge Function `supabase/functions/enviar-correo/` (`index.ts` + `correo.mjs`): sesión real, solo links del
+      sitio, nombre tomado del link, cupo por usuario y global, Gmail por el puerto 465, sin logs de datos
+- [x] `schema.sql`: tabla `envios_correo` (200 por usuario en 24 h, sin fechas falsas, borrado a los 30 días) + `test:rls`
+- [x] UI: correo por fila (solo en `localStorage`), "✉️ Correo" y "Enviar a todos" en lotes de 10, estados por fila;
+      sin sesión pide login; contrato `window.AmigoSecretoCorreo` en `perfil.js`
+- [x] Diseño único de correos (participante + Magic Link + Confirm signup), `supabase/correos/*.html` generados,
+      vistas previas en claro/oscuro (`npm run correos:vista`)
+- [x] `test:correo` (anti-phishing, inyección de cabeceras, escape HTML, plantillas al día), `test:funcion` (la función
+      en Deno con Supabase y SMTP simulados) y E2E (sin sesión, con
+      sesión simulada, nada a `rest/v1`) → **OK**
+- [x] Docs: D19–D21, SEGURIDAD, CLAUDE.md, privacidad, SUPABASE-SETUP §7
+- [x] Usuario: `schema.sql` ejecutado, contraseña de aplicación de Gmail, secretos y función desplegada. Verificado (2026-11-27):
+      CORS solo para github.io (204/403), clave anon rechazada (401), tabla `envios_correo` creada y sin acceso anon
+- [x] Usuario: plantillas de `supabase/correos/` pegadas en Authentication → Emails
+- [ ] Prueba real: sorteo de 3 con correos propios (llega, el botón abre, el código revela) y login con la plantilla nueva
+
 ## Ideas futuras (no comprometidas)
+- [ ] Proveedor de correo transaccional con dominio propio (evita la copia en "Enviados" de Gmail y su límite diario)
 - [ ] Lista de deseos por participante
 - [ ] Exportar/importar el sorteo a un archivo (respaldo fuera del navegador)

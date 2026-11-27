@@ -132,3 +132,62 @@ Detalle en `docs/SEGURIDAD.md` (H1–H5). Decisiones que cambian el comportamien
 - **Supabase:** la Site URL y la Redirect URL pasan a la URL pública; la de `127.0.0.1:8099` se mantiene solo
   para pruebas locales.
 - `robots.txt` en una subcarpeta no lo leen los buscadores, así que el sitemap se envía en Search Console.
+
+## D19 — Link compacto v3 (2026-11-27)
+- **Motivo:** el link v2 medía ~970 caracteres (JSON público, relleno fijo de 512 bytes, JSON cifrado). Se pidió acortarlo.
+- **Elegido:** formato `#3.<b64url(quien regala)>.<b64url(salt16|iv12|AES-GCM)>`, sin servidor:
+  - Las iteraciones (600k) quedan implícitas en la versión. Si cambian, se sube a v4. AAD = `"3." + b64url(nombre)`.
+  - El texto cifrado es binario: `[flags][lenR][P]` + receptor UTF-8 + ceros hasta `P` + JSON corto del evento
+    (`{m,f,l,x}`).
+  - **Relleno `P` = el nombre más largo del sorteo** (`Sorteo.rellenoPara`), no 512 fijo. Todos los links de un
+    sorteo siguen midiendo lo mismo (H1). `P` solo revela el largo del nombre más largo de una lista que todos los
+    participantes conocen. Sin `P`, el peor caso es 180 bytes.
+  - Resultado: **~120–140 caracteres sin evento, ~220 con evento** (antes ~970).
+- **Compatibilidad:** los links v2 ya enviados se siguen leyendo (`leerPublico`/`decodificar` aceptan ambos;
+  `_codificarV2` queda solo para pruebas). `app.js` reconoce `#2.` y `#3.`.
+- **Descartado:** link corto guardado en Supabase (`#c.Ab3xK9`): obligaría a la vista participante a usar red y
+  a guardar el cifrado en la base. Comprimir el evento con `CompressionStream`: ahorra poco en textos cortos y
+  Safari < 16.4 no lo soporta.
+
+## D20 — Envío por correo desde el sitio (2026-11-27)
+- **Motivo:** se pidió enviar a cada persona un correo con un botón que lleve a su resultado, además de WhatsApp.
+- **Elegido:** Edge Function de Supabase `enviar-correo` con el **SMTP de Gmail** que ya usa el login.
+  - El correo es HTML: botón al link + el código debajo + versión en texto.
+  - **Cambia una invariante a propósito.** Link y código salen del navegador **solo** cuando el organizador,
+    con sesión iniciada, pulsa "✉️ Correo" o "Enviar a todos". Pasan por la función y por Gmail, y no se guardan
+    en la base ni en los logs.
+  - **Contrato:** `perfil.js` expone `window.AmigoSecretoCorreo.enviar([{email,url,codigo}])` y activa
+    `body.con-correo`. `app.js` sigue sin hablar con Supabase. Los correos de los participantes se guardan solo
+    en el `localStorage` del organizador.
+  - **Anti-abuso:**
+    - Solo usuarios con sesión: la función verifica el JWT con `auth.getUser`, porque la clave anon también es un JWT.
+    - Solo URLs de `SITIO_URLS` con formato de link v2/v3.
+    - **El nombre del correo sale del propio link**, no del cliente, así que no se puede inyectar texto.
+    - Correos validados sin `,;<>` ni saltos de línea.
+    - Hasta 100 por llamada (el cliente manda lotes de 10).
+    - Cupo de **200 por usuario en 24 h** (`public.envios_correo`, RLS + trigger con advisory lock, sin poder
+      fijar la fecha).
+    - Cupo **global de 450 en 24 h**, contado con la service_role dentro de la función. Gmail permite ~500 al día.
+  - **Puerto 465** (TLS implícito): Supabase bloquea la salida por 25 y 587.
+- **Descartado:** `mailto:` desde el correo del organizador. No permite HTML con botón, aunque mantenía la
+  invariante. Resend o Brevo: el usuario usa Gmail. Se puede cambiar el transporte en `index.ts` sin tocar
+  `correo.mjs`.
+- **Riesgos aceptados:**
+  - La carpeta **Enviados** de la cuenta Gmail del SMTP guarda una copia de cada correo, con link y código. Quien
+    controle esa cuenta podría ver los resultados de los sorteos que se envían por correo. La política de
+    privacidad lo dice. Mitigación futura: un proveedor transaccional con dominio propio y sin buzón de enviados.
+  - Gmail no está pensado para envíos de un servicio público: el límite diario es bajo y Google podría bloquear
+    la cuenta si crece. Hay que migrar si eso pasa.
+  - El correo llega al buzón del participante. Si lo reenvía completo, quien lo reciba puede ver el resultado
+    (igual que "Link + código"). El correo lo advierte.
+
+## D21 — Diseño unificado de los correos (2026-11-27)
+- **Elegido:** un solo diseño (`correo.mjs`) para el correo del participante y las plantillas de login de
+  Supabase (Magic Link y Confirm signup).
+  - Tablas con estilos inline: fondo crema, tarjeta blanca con franja roja, botón rojo grande, link de respaldo y
+    pie con privacidad.
+  - Modo oscuro con `prefers-color-scheme` donde el cliente lo soporta.
+  - Las plantillas de login explican que el link se abre en el mismo navegador (PKCE) y que vence en 1 hora.
+- `supabase/correos/*.html` se generan con `npm run correos` (no se editan a mano). El test comprueba que estén
+  al día. `npm run correos:vista` genera vistas previas y capturas.
+- Las plantillas se pegan a mano en Supabase (Authentication → Emails).

@@ -140,6 +140,66 @@ revoke all on function public.listas_inmutables()  from public, anon, authentica
 revoke all on function public.limitar_listas()     from public, anon, authenticated;
 revoke all on function public.recortar_historial() from public, anon, authenticated;
 
+-- ---------- Cupo de envío por correo (D20) ----------
+-- Solo cuenta CUÁNTOS correos envió cada usuario y cuándo. Nunca destinatarios, links ni códigos.
+-- La Edge Function `enviar-correo` inserta una fila por envío con el JWT del usuario (RLS aplica) antes de enviar.
+create table if not exists public.envios_correo (
+  id         bigint generated always as identity primary key,
+  user_id    uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  cantidad   integer not null check (cantidad between 1 and 100),
+  creado_en  timestamptz not null default now()
+);
+create index if not exists envios_correo_user_idx  on public.envios_correo (user_id, creado_en desc);
+create index if not exists envios_correo_fecha_idx on public.envios_correo (creado_en);
+
+revoke all on public.envios_correo from anon, authenticated;
+grant select, insert (cantidad) on public.envios_correo to authenticated;   -- no se edita ni se borra
+alter table public.envios_correo enable row level security;
+
+drop policy if exists envios_correo_select on public.envios_correo;
+drop policy if exists envios_correo_insert on public.envios_correo;
+create policy envios_correo_select on public.envios_correo for select to authenticated
+  using ((select auth.uid()) = user_id);
+create policy envios_correo_insert on public.envios_correo for insert to authenticated
+  with check ((select auth.uid()) = user_id);
+
+-- Máximo 200 correos por usuario en 24 horas. Mismo patrón que limitar_listas (H4): security invoker, por
+-- auth.uid() y con advisory lock para que dos envíos simultáneos no se pasen del límite.
+create or replace function public.limitar_envios_correo() returns trigger
+language plpgsql security invoker set search_path = '' as $$
+declare
+  uid uuid := (select auth.uid());
+  usados integer;
+begin
+  perform pg_advisory_xact_lock(hashtext('correo:' || coalesce(uid::text, '')));
+  select coalesce(sum(cantidad), 0) into usados from public.envios_correo
+   where user_id = uid and creado_en > now() - interval '24 hours';
+  if usados + new.cantidad > 200 then
+    raise exception 'Llegaste al máximo de 200 correos en 24 horas (te quedan %). Envía el resto por WhatsApp o intenta mañana.',
+      greatest(200 - usados, 0) using errcode = 'P0001';
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists envios_correo_limite on public.envios_correo;
+create trigger envios_correo_limite before insert on public.envios_correo
+  for each row execute function public.limitar_envios_correo();
+
+-- Limpieza: no guardar más de 30 días de registros de envío.
+create or replace function public.recortar_envios_correo() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  delete from public.envios_correo where creado_en < now() - interval '30 days';
+  return null;
+end $$;
+
+drop trigger if exists envios_correo_recorte on public.envios_correo;
+create trigger envios_correo_recorte after insert on public.envios_correo
+  for each statement execute function public.recortar_envios_correo();
+
+revoke all on function public.limitar_envios_correo()  from public, anon, authenticated;
+revoke all on function public.recortar_envios_correo() from public, anon, authenticated;
+
 -- ---------- Eliminar mi cuenta ----------
 -- security definer para poder borrar de auth.users; solo borra la fila del propio usuario.
 -- El ON DELETE CASCADE elimina sus listas e historial.

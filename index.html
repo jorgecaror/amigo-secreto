@@ -40,7 +40,7 @@
   "inLanguage": "es",
   "isAccessibleForFree": true,
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-  "featureList": ["Sorteo sin que nadie se toque a sí mismo", "Exclusiones (parejas)", "Link privado por persona con código", "Envío por WhatsApp", "Datos del evento: monto, fecha y lugar", "Listas guardadas con cuenta opcional"]
+  "featureList": ["Sorteo sin que nadie se toque a sí mismo", "Exclusiones (parejas)", "Link privado por persona con código", "Envío por WhatsApp", "Envío por correo con botón al resultado", "Datos del evento: monto, fecha y lugar", "Listas guardadas con cuenta opcional"]
 }
 </script>
 <script type="application/ld+json" id="faq-ld">
@@ -86,12 +86,12 @@
   <!-- ================= Vista organizador ================= -->
   <section id="vista-organizador" hidden>
     <h1>Amigo secreto online: sorteo gratis y privado</h1>
-    <p class="sub">Ingresa los participantes, sortea y envía a cada uno su link personal por WhatsApp. Nadie ve el resultado de otro, ni siquiera tú.</p>
+    <p class="sub">Ingresa los participantes, sortea y envía a cada uno su link personal por WhatsApp o por correo. Nadie ve el resultado de otro, ni siquiera tú.</p>
 
     <!-- Login (perfil.js) -->
     <div class="card" id="login-card" hidden>
       <h2>Iniciar sesión</h2>
-      <p class="hint" style="margin-top:0">Te enviaremos un link a tu correo; no hay contraseñas. Ábrelo <strong>en este mismo navegador</strong>. La cuenta es opcional: solo sirve para guardar tus listas.</p>
+      <p class="hint" style="margin-top:0">Te enviaremos un link a tu correo; no hay contraseñas. Ábrelo <strong>en este mismo navegador</strong>. La cuenta es opcional: sirve para guardar tus listas y enviar los resultados por correo.</p>
       <form id="login-form" autocomplete="on">
         <label for="login-email">Correo</label>
         <input id="login-email" type="email" required maxlength="254" autocomplete="email" placeholder="tu@correo.com">
@@ -176,6 +176,12 @@
         <h2>✅ Sorteo listo</h2>
         <p class="hint" style="margin-top:0" id="res-info"></p>
         <p class="hint">Cada persona necesita <strong>su link y su código</strong>. Para más seguridad, envía el código por otro canal (en persona, otro chat). No abras los links de los demás 😉</p>
+        <!-- Envío por correo (D20). Visible solo si perfil.js activa los perfiles (body.con-correo). -->
+        <div class="correo-bloque solo-correo">
+          <p class="hint" style="margin-top:0">✉️ <strong>Por correo:</strong> escribe el correo de cada persona y le llegará un botón a su resultado junto con su código. Necesitas iniciar sesión.</p>
+          <button type="button" id="btn-correo-todos">✉️ Enviar a todos los que tienen correo</button>
+          <div id="correo-msg" class="hint" hidden></div>
+        </div>
         <ul class="list" id="links"></ul>
       </div>
       <button type="button" id="btn-nuevo">🔄 Nuevo sorteo</button>
@@ -220,7 +226,7 @@
     <ol class="pasos">
       <li><strong>Escribe los nombres.</strong> Agrega exclusiones si hay parejas que no deben tocarse entre sí, y los datos del evento: monto máximo, fecha y lugar.</li>
       <li><strong>Sortea.</strong> A nadie le toca a sí mismo y cada persona recibe exactamente un regalo. Tú tampoco ves los resultados.</li>
-      <li><strong>Envía los links.</strong> Cada participante recibe su link y su código por WhatsApp, lo abre y descubre a quién le regala.</li>
+      <li><strong>Envía los links.</strong> Cada participante recibe su link y su código por WhatsApp o por correo, lo abre y descubre a quién le regala.</li>
     </ol>
 
     <h2>Por qué usar este sorteo de amigo secreto</h2>
@@ -228,7 +234,7 @@
       <li>🔒 <strong>Privado de verdad:</strong> cada resultado va cifrado y solo se abre con el código de esa persona.</li>
       <li>🙅 <strong>Sin registro:</strong> sortea al instante, sin correos ni contraseñas. La cuenta es opcional.</li>
       <li>💑 <strong>Exclusiones:</strong> evita que a las parejas o hermanos les toque entre sí.</li>
-      <li>📱 <strong>Para WhatsApp:</strong> un botón por persona para enviarle su link.</li>
+      <li>📱 <strong>Por WhatsApp o correo:</strong> un botón por persona para enviarle su link.</li>
       <li>🎄 <strong>Para cualquier ocasión:</strong> Navidad, la oficina, el curso o la familia.</li>
       <li>💸 <strong>Gratis:</strong> sin anuncios y hasta 100 participantes por sorteo.</li>
     </ul>

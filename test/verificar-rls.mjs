@@ -127,14 +127,48 @@ await como('authenticated', B, async () => {
 });
 console.log('✓ Funciones de trigger y auth.users no expuestas');
 
+// --- Cupo de correos (D20) ---
+await como('authenticated', A, async () => {
+  await falla(q(`insert into public.envios_correo (cantidad) values (101)`), /check constraint/, 'más de 100 por envío');
+  await falla(q(`insert into public.envios_correo (cantidad) values (0)`), /check constraint/, '0 correos');
+  const r = await q(`insert into public.envios_correo (cantidad) values (100) returning user_id`);
+  assert.equal(r.rows[0].user_id, A, 'user_id por defecto = auth.uid()');
+  await q(`insert into public.envios_correo (cantidad) values (90)`);
+  await falla(q(`insert into public.envios_correo (cantidad) values (11)`), /máximo de 200 correos.*quedan 10/, 'pasarse del cupo');
+  await q(`insert into public.envios_correo (cantidad) values (10)`);
+  await falla(q(`insert into public.envios_correo (cantidad) values (1)`), /máximo de 200 correos.*quedan 0/, 'correo 201');
+  await falla(q(`insert into public.envios_correo (cantidad, creado_en) values (1, now() - interval '2 days')`), /permission denied/, 'fecha falsa para evadir el cupo');
+  await falla(q(`update public.envios_correo set cantidad = 1`), /permission denied/, 'editar el cupo');
+  await falla(q(`delete from public.envios_correo`), /permission denied/, 'borrar el cupo');
+  assert.equal((await q('select coalesce(sum(cantidad),0)::int n from public.envios_correo')).rows[0].n, 200);
+});
+await como('authenticated', B, async () => {
+  assert.equal((await q('select count(*)::int n from public.envios_correo')).rows[0].n, 0, 'B no ve los envíos de A');
+  // El cupo de A no afecta a B, y B no puede usarlo como oráculo ni insertar a nombre de A.
+  await q(`insert into public.envios_correo (cantidad) values (100)`);
+  const m = await falla(q(`insert into public.envios_correo (user_id, cantidad) values ($1, 1)`, [A]), /permission denied|row-level security/, 'B inserta a nombre de A');
+  assert.doesNotMatch(m, /máximo/);
+});
+await como('anon', null, async () => {
+  await falla(q('select * from public.envios_correo'), /permission denied/, 'anon lee envíos');
+  await falla(q('insert into public.envios_correo (cantidad) values (1)'), /permission denied/, 'anon inserta envíos');
+});
+await como('authenticated', B, async () => {
+  await falla(q('select public.limitar_envios_correo()'), /permission denied|trigger/, 'llamar trigger de correo');
+});
+console.log('✓ Cupo de correos: 200 en 24 h por usuario, sin fechas falsas, no editable, aislado entre usuarios, anon sin acceso');
+
 // --- B crea una lista; A elimina su cuenta ---
 await como('authenticated', B, () => q(`insert into public.listas (nombre, participantes) values ('De B', $1)`, [P]));
 await como('authenticated', A, () => q('select public.eliminar_mi_cuenta()'));
 const r = await q(`select (select count(*)::int from auth.users) usuarios,
                           (select count(*)::int from public.listas where user_id='${A}') listasA,
                           (select count(*)::int from public.sorteos where user_id='${A}') sorteosA,
-                          (select count(*)::int from public.listas where user_id='${B}') listasB`);
+                          (select count(*)::int from public.listas where user_id='${B}') listasB,
+                          (select count(*)::int from public.envios_correo where user_id='${A}') enviosA,
+                          (select count(*)::int from public.envios_correo where user_id='${B}') enviosB`);
 assert.equal(r.rows[0].usuarios, 1); assert.equal(r.rows[0].listasa, 0); assert.equal(r.rows[0].sorteosa, 0); assert.equal(r.rows[0].listasb, 1);
-console.log('✓ eliminar_mi_cuenta(): borra a A con sus listas e historial; B intacto');
+assert.equal(r.rows[0].enviosa, 0); assert.equal(r.rows[0].enviosb, 1);
+console.log('✓ eliminar_mi_cuenta(): borra a A con sus listas, historial y registro de correos; B intacto');
 
 console.log('\nOK — schema.sql verificado en Postgres', (await q('show server_version')).rows[0].server_version);

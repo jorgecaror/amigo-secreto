@@ -33,16 +33,15 @@ En **Authentication → URL Configuration**:
   - `https://jorgecaror.github.io/amigo-secreto/**`
   - `http://127.0.0.1:8099/amigo-secreto/**` (solo para pruebas locales; puedes quitarla en producción)
 
-En **Authentication → Emails → Magic Link**, cambia la plantilla a español, por ejemplo:
-- Asunto: `Tu link para entrar a Amigo Secreto`
-- Cuerpo:
-  ```html
-  <h2>Entrar a Amigo Secreto</h2>
-  <p>Toca este link para iniciar sesión. Ábrelo en el mismo navegador donde lo pediste:</p>
-  <p><a href="{{ .ConfirmationURL }}">Iniciar sesión</a></p>
-  <p>Si no pediste este correo, ignóralo.</p>
-  ```
-Haz lo mismo con la plantilla **Confirm signup**: la primera vez que alguien entra, Supabase envía esa.
+En **Authentication → Emails**, usa las plantillas con el diseño del sitio (D21). Están en `supabase/correos/` y se
+generan con `npm run correos`; no las edites a mano:
+| Plantilla en Supabase | Asunto | Cuerpo (pega el archivo completo) |
+|---|---|---|
+| **Magic Link** | `🔑 Tu link para entrar a Amigo Secreto` | [`supabase/correos/login.html`](../supabase/correos/login.html) |
+| **Confirm signup** (la primera vez que alguien entra) | `👋 Confirma tu cuenta de Amigo Secreto` | [`supabase/correos/confirmar-registro.html`](../supabase/correos/confirmar-registro.html) |
+
+El asunto también está en el comentario al inicio de cada archivo. Después de guardar, pide un link para probarlo.
+Para ver cómo quedan sin enviar nada: `npm run correos:vista`.
 > Supabase solo deja editar las plantillas si ya configuraste el SMTP propio (paso 4). Si aún no lo tienes, haz
 > este bloque después del paso 4.
 
@@ -95,7 +94,44 @@ rollback;
 select tablename, policyname, cmd, roles from pg_policies where schemaname = 'public';
 ```
 
-## 7. Mantención
+## 7. Envío de resultados por correo (Edge Function `enviar-correo`, D20)
+Opcional. Sin este paso, el botón "✉️ Correo" responde con un error y WhatsApp sigue funcionando igual.
+
+1. **Base de datos:** vuelve a ejecutar [`supabase/schema.sql`](../supabase/schema.sql) completo en el SQL Editor.
+   Crea la tabla `envios_correo`, que solo guarda cuántos correos envió cada usuario y cuándo.
+2. **Contraseña de aplicación de Gmail.** En la cuenta Google del SMTP, con la verificación en dos pasos activa:
+   <https://myaccount.google.com/apppasswords>. Crea una ("Amigo Secreto") y copia los 16 caracteres. Puede ser la
+   misma que usaste en el SMTP del paso 4.
+3. **Secretos de la función.** En una terminal en la carpeta del proyecto (pide iniciar sesión en el navegador):
+   ```bash
+   npx supabase login
+   npx supabase secrets set --project-ref afrsrmxkgfztevosnjkw \
+     SMTP_HOST=smtp.gmail.com SMTP_PORT=465 SMTP_USER=tu-cuenta@gmail.com SMTP_PASS="xxxx xxxx xxxx xxxx" \
+     SMTP_FROM='"Amigo Secreto" <tu-cuenta@gmail.com>' \
+     SITIO_URLS=https://jorgecaror.github.io/amigo-secreto/ \
+     ORIGENES=https://jorgecaror.github.io
+   ```
+   - En PowerShell, escribe el comando en una sola línea (sin las `\`).
+   - Opcional: `CUPO_GLOBAL_DIARIO=450`, el máximo de correos en 24 h para todo el sitio. Gmail permite ~500 al día.
+   - Para probar en local, agrega `http://127.0.0.1:8099/amigo-secreto/` a `SITIO_URLS` y `http://127.0.0.1:8099` a
+     `ORIGENES`, separados por comas.
+   - `SUPABASE_URL`, `SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY` los pone Supabase: no los agregues.
+4. **Desplegar** (`--use-api` evita necesitar Docker):
+   ```bash
+   npx supabase functions deploy enviar-correo --project-ref afrsrmxkgfztevosnjkw --use-api
+   ```
+   Debe aparecer en **Edge Functions** con "Verify JWT" activado.
+5. **Probar:** inicia sesión en el sitio, haz un sorteo de 3 personas con correos tuyos y pulsa "✉️ Enviar a todos".
+   - Revisa que lleguen los correos (y la carpeta de spam).
+   - El botón debe abrir el resultado y el código debe revelarlo.
+   - Si falla, revisa **Edge Functions → enviar-correo → Logs**. Ahí solo aparecen códigos de error, nunca
+     correos ni links.
+
+> ⚠️ La carpeta **Enviados** de esa cuenta Gmail guardará una copia de cada correo, con su link y su código (D20).
+> Usa una cuenta dedicada al sitio y no la revises más de lo necesario. Si el sitio crece, conviene pasar a un
+> proveedor transaccional con dominio propio (Resend/Brevo): solo cambia el transporte en `index.ts`.
+
+## 8. Mantención
 - Plan gratis: 500 MB de base de datos. Una lista pesa ~1 KB, así que alcanza para cientos de miles de listas.
 - Los proyectos gratis se **pausan tras 7 días sin actividad**. Se reactivan desde el panel. Si el sitio tiene
   uso real, esto no ocurre.
