@@ -61,7 +61,7 @@
 - [x] Supabase: Site URL y Redirect URLs con la URL pública. Verificado: publicado, `index.html` y local aceptados; dominio
       ajeno rechazado → vuelve a la Site URL
 - [x] Link de login vencido (`#error=otp_expired`): antes no mostraba aviso; ahora avisa, limpia la URL y no carga Supabase (E2E 5c)
-- [ ] Probar login desde el sitio publicado
+- [x] Login desde el sitio publicado (usado en la prueba real del correo, 2026-11-27)
 - [ ] Probar un link real desde el celular (abrir, revelar, WhatsApp)
 
 ## Fase 7 — Correo, link corto y correos de login (2026-11-27) — D19, D20, D21

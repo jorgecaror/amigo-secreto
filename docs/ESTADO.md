@@ -35,9 +35,8 @@ Este archivo es el resumen. El detalle de cada tarea está en [`TAREAS.md`](TARE
 ## ⏳ Pendiente
 
 ### Lo hace el usuario
-1. **Probar el login desde el sitio publicado.** Las URLs de Supabase ya están configuradas y verificadas.
-2. **Probar desde el celular:** sorteo pequeño, compartir un link por WhatsApp, abrirlo y revelarlo con el código.
-3. **Completar el checklist manual de perfiles** (`SUPABASE-SETUP.md` §6):
+1. **Probar desde el celular:** sorteo pequeño, compartir un link por WhatsApp, abrirlo y revelarlo con el código.
+2. **Completar el checklist manual de perfiles** (`SUPABASE-SETUP.md` §6):
    - Guardar una lista y recargar.
    - Revisar el historial.
    - Comprobar que una segunda cuenta no ve las listas.
