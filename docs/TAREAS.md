@@ -81,7 +81,7 @@
 - [x] Usuario: plantillas de `supabase/correos/` pegadas en Authentication → Emails
 - [x] Hallazgo en la prueba real: `42501` al leer el cupo global → el proyecto no da permisos por defecto a `service_role`;
       `schema.sql` ahora hace `grant select on envios_correo to service_role` y `test:rls` lo cubre (sin permisos por defecto)
-- [x] Prueba real (2026-11-27): sorteo con correos propios desde el sitio publicado → el correo llega con el botón al link
+- [x] Prueba real (2026-11-27): sorteo con correos propios desde el sitio publicado → el correo llega, el botón abre el resultado y el código lo revela
 - [ ] Login con la plantilla nueva: aún llega con el diseño antiguo → aplicar con `node supabase/correos/aplicar.mjs`
 
 ## Ideas futuras (no comprometidas)
