@@ -140,7 +140,7 @@ Detalle en `docs/SEGURIDAD.md` (H1–H5). Decisiones que cambian el comportamien
   - El texto cifrado es binario: `[flags][lenR][P]` + receptor UTF-8 + ceros hasta `P` + JSON corto del evento
     (`{m,f,l,x}`).
   - **Relleno `P` = el nombre más largo del sorteo** (`Sorteo.rellenoPara`), no 512 fijo. Todos los links de un
-    sorteo siguen midiendo lo mismo (H1). `P` solo revela el largo del nombre más largo de una lista que todos los
+    sorteo siguen teniendo la parte cifrada del mismo largo (H1); el link solo varía por el nombre visible de quien regala. `P` solo revela el largo del nombre más largo de una lista que todos los
     participantes conocen. Sin `P`, el peor caso es 180 bytes.
   - Resultado: **~120–140 caracteres sin evento, ~220 con evento** (antes ~970).
 - **Compatibilidad:** los links v2 ya enviados se siguen leyendo (`leerPublico`/`decodificar` aceptan ambos;

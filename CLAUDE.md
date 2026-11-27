@@ -77,7 +77,8 @@ y abrir `http://127.0.0.1:8099/amigo-secreto/`.
 - Sin scripts inline ni CDNs: la CSP es `script-src 'self'`. Las librerías van en `vendor/` con versión y SHA-256.
   `perfil.js` fija en tiempo de ejecución `connect-src` al proyecto exacto de `config.js`, o `'none'` sin config.
 - El receptor se rellena al nombre más largo del sorteo (`rellenoPara`; en v2 era `BYTES_RECEPTOR`): todos los links
-  de un sorteo miden lo mismo y el largo no depende del receptor.
+  de un sorteo tienen la parte cifrada del mismo largo (solo varía por el nombre visible de quien regala), así que el
+  largo no depende del receptor.
 - "Link + código" nunca se envía por una URL web (`wa.me`): se usa `navigator.share` o el portapapeles. Detalle en `docs/SEGURIDAD.md`.
   La única red permitida es `connect-src https://*.supabase.co`.
 - Texto de usuario siempre con `textContent`. `localStorage` siempre en try/catch.

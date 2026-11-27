@@ -234,7 +234,7 @@
   //   - Iteraciones implícitas en la versión (ITERACIONES_V3). Si cambian, se sube a v4.
   //   - AAD = "3." + b64url(quienRegala): alterar el nombre invalida el link.
   //   - texto (binario) = [flags=0][lenR][P] + receptor UTF-8 + ceros hasta P bytes + JSON corto del evento.
-  //     P = largo UTF-8 del nombre más largo del sorteo (rellenoPara): todos los links de un sorteo miden lo mismo
+  //     P = largo UTF-8 del nombre más largo del sorteo (rellenoPara): la parte cifrada de todos los links de un sorteo mide lo mismo
   //     (SEGURIDAD.md H1) y P solo revela algo que todos los participantes ya saben.
   var ITERACIONES_V3 = 600000;
   var RELLENO_MAX = MAX_LARGO_NOMBRE * 3; // 60 unidades UTF-16 × 3 bytes como máximo (BMP) = 180 < 255

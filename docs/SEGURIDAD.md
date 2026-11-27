@@ -47,7 +47,7 @@ ni bypass de RLS.
 
 ## Cambios posteriores — 2026-11-27 (D19, D20)
 - **Link v3 (D19):** el relleno pasa a ser el nombre más largo del sorteo. H1 se mantiene: todos los links de un
-  sorteo miden lo mismo, y `test:sorteo` lo prueba con nombres de 2 a 60 caracteres, emojis y CJK. AAD con versión y
+  sorteo tienen la parte cifrada del mismo largo (el link solo varía por el nombre visible de quien regala), y `test:sorteo` lo prueba con nombres de 2 a 60 caracteres, emojis y CJK. AAD con versión y
   nombre: cambiar `3.` por `2.` o el nombre invalida el link.
 - **Envío por correo (D20).** Es la nueva superficie y es **opt-in**: solo con sesión y con un clic.
   - **Phishing/spam:** la función solo acepta URLs `SITIO_URLS` + `#2.|#3.` con base64url. El nombre lo saca del
