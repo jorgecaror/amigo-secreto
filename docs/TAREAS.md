@@ -28,7 +28,8 @@
 - [x] Bug corregido: `app.js` sobrescribía el `<title>` SEO
 - [x] URL pública `jorgecaror.github.io/amigo-secreto` en index, privacidad, robots y sitemap
 - [x] Archivo de verificación de Google publicado (`googleaf2cb88067bc384d.html`) y sitemap con fecha 2026-11-27
-- [ ] Usuario: pulsar "Verificar" en Search Console, enviar `sitemap.xml` y solicitar indexación
+- [x] Usuario: propiedad verificada en Search Console y `sitemap.xml` enviado (2026-11-27)
+- [ ] Usuario: "Solicitar indexación" en Inspección de URL (si no se hizo) y revisar en unos días que el sitemap quede "Correcto"
 
 ## Fase 5 — Perfiles con Supabase (2026-11-23) — D12, D13, D14, D16
 - [x] `supabase/schema.sql` (RLS, límites, triggers, `eliminar_mi_cuenta`) + `npm run test:rls` en Postgres 16 (PGlite) → **OK**

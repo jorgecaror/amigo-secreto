@@ -29,6 +29,7 @@ Este archivo es el resumen. El detalle de cada tarea está en [`TAREAS.md`](TARE
 | Envío por correo | **Funcionando en producción.** Botón al resultado + código, enviado por el sitio (Edge Function + Gmail) solo con sesión y con clic; cupos por usuario y global; WhatsApp igual que antes | `supabase/functions/enviar-correo/`, `app.js`, `perfil.js`, D20 |
 | Diseño de correos | **Aplicado en producción.** Un diseño para el correo del participante y los de login (Magic Link, Confirm signup), claro y oscuro | `supabase/correos/`, D21 |
 | Cerrar sesión | "Salir" avisa si hay un sorteo en pantalla, lo borra del navegador y vuelve al formulario vacío | `app.js`, `perfil.js`, D22 |
+| Google Search Console | Propiedad verificada (archivo `googleaf2cb88067bc384d.html`, no borrar) y sitemap enviado | `SEO.md` |
 | Publicación | Commits en `main`, GitHub Pages activo, verificado en vivo (páginas, 404, sorteo, revelación, CSP, consola limpia) | D18 |
 
 ## ⏳ Pendiente
@@ -41,13 +42,8 @@ Este archivo es el resumen. El detalle de cada tarea está en [`TAREAS.md`](TARE
    - Revisar el historial.
    - Comprobar que una segunda cuenta no ve las listas.
    - Eliminar una cuenta.
-4. **Google Search Console** (`SEO.md`):
-   - Agregar la propiedad.
-   - Verificar con la etiqueta HTML (pasarla para agregarla a `index.html`).
-   - Enviar `sitemap.xml`. Hay que hacerlo a mano: en una subcarpeta de github.io, Google no lee `robots.txt`.
 
 ### Se puede hacer conmigo
-- Agregar la etiqueta de verificación de Google cuando la tengas.
 - Usar `/security-review` en los próximos cambios (ya existe el remoto `origin`).
 
 ### Ideas futuras (no comprometidas)
