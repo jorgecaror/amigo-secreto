@@ -5,19 +5,16 @@
 //   $env:SUPABASE_ACCESS_TOKEN = "sbp_..."
 //   node supabase/correos/aplicar.mjs            → aplica y verifica
 //   node supabase/correos/aplicar.mjs --ver      → solo muestra qué plantillas tiene hoy el proyecto
+//
+// Sin process.exit(): en Windows, salir con conexiones de fetch abiertas dispara un assert de libuv
+// ("Assertion failed: !(handle->flags & UV_HANDLE_CLOSING)"). Se usa process.exitCode y el proceso termina solo.
 import { generar } from './generar.mjs';
 import { ASUNTOS_LOGIN } from '../functions/enviar-correo/correo.mjs';
 
 const PROYECTO = 'afrsrmxkgfztevosnjkw';
 const API = `https://api.supabase.com/v1/projects/${PROYECTO}/config/auth`;
-const token = process.env.SUPABASE_ACCESS_TOKEN;
-if (!token) {
-  console.error('Falta SUPABASE_ACCESS_TOKEN. Créalo en https://supabase.com/dashboard/account/tokens y ejecuta:\n  $env:SUPABASE_ACCESS_TOKEN = "sbp_..."');
-  process.exit(1);
-}
-const headers = { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' };
 
-async function leer() {
+async function leer(headers) {
   const r = await fetch(API, { headers });
   if (!r.ok) throw new Error(`GET config/auth → ${r.status} ${await r.text()}`);
   return r.json();
@@ -31,22 +28,38 @@ function resumen(c) {
   return nuevo(c.mailer_templates_magic_link_content) && nuevo(c.mailer_templates_confirmation_content);
 }
 
-console.log('Antes:');
-resumen(await leer());
-if (process.argv.includes('--ver')) process.exit(0);
+async function principal() {
+  const token = process.env.SUPABASE_ACCESS_TOKEN;
+  if (!token) {
+    console.error('Falta SUPABASE_ACCESS_TOKEN. Créalo en https://supabase.com/dashboard/account/tokens y ejecuta:\n  $env:SUPABASE_ACCESS_TOKEN = "sbp_..."');
+    return 1;
+  }
+  const headers = { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' };
 
-const p = generar();
-const r = await fetch(API, {
-  method: 'PATCH',
-  headers,
-  body: JSON.stringify({
-    mailer_subjects_magic_link: ASUNTOS_LOGIN.magicLink,
-    mailer_templates_magic_link_content: p['login.html'],
-    mailer_subjects_confirmation: ASUNTOS_LOGIN.confirmacion,
-    mailer_templates_confirmation_content: p['confirmar-registro.html']
-  })
-});
-if (!r.ok) { console.error(`PATCH config/auth → ${r.status} ${await r.text()}`); process.exit(1); }
-console.log('\nDespués:');
-if (!resumen(await leer())) { console.error('\nLas plantillas no quedaron aplicadas.'); process.exit(1); }
-console.log('\n✓ Plantillas aplicadas. Pide un link de login nuevo para verlas (los ya enviados no cambian).');
+  console.log('Antes:');
+  resumen(await leer(headers));
+  if (process.argv.includes('--ver')) return 0;
+
+  const p = generar();
+  const r = await fetch(API, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({
+      mailer_subjects_magic_link: ASUNTOS_LOGIN.magicLink,
+      mailer_templates_magic_link_content: p['login.html'],
+      mailer_subjects_confirmation: ASUNTOS_LOGIN.confirmacion,
+      mailer_templates_confirmation_content: p['confirmar-registro.html']
+    })
+  });
+  if (!r.ok) { console.error(`PATCH config/auth → ${r.status} ${await r.text()}`); return 1; }
+
+  console.log('\nDespués:');
+  if (!resumen(await leer(headers))) { console.error('\nLas plantillas no quedaron aplicadas.'); return 1; }
+  console.log('\n✓ Plantillas aplicadas. Pide un link de login nuevo para verlas (los ya enviados no cambian).');
+  return 0;
+}
+
+principal().then(
+  (codigo) => { process.exitCode = codigo; },
+  (e) => { console.error(e.message); process.exitCode = 1; }
+);
