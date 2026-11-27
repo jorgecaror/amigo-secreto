@@ -26,14 +26,14 @@ Este archivo es el resumen. El detalle de cada tarea está en [`TAREAS.md`](TARE
 | Pruebas | `npm test` (lógica + RLS en Postgres 16) y `npm run test:e2e` (Edge headless): todo OK | `test/` |
 | URLs de Supabase | Site URL y Redirect URLs del sitio publicado; dominios ajenos rechazados. Aviso claro si el link de login venció | `perfil.js` |
 | Link corto (v3) | De ~970 a ~120–220 caracteres, sin servidor; los links v2 ya enviados siguen funcionando | `sorteo.js`, D19 |
-| Envío por correo | Botón al resultado + código, enviado por el sitio (Edge Function + Gmail) solo con sesión y con clic; cupos por usuario y global; WhatsApp igual que antes | `supabase/functions/enviar-correo/`, `app.js`, `perfil.js`, D20 |
+| Envío por correo | **Funcionando en producción.** Botón al resultado + código, enviado por el sitio (Edge Function + Gmail) solo con sesión y con clic; cupos por usuario y global; WhatsApp igual que antes | `supabase/functions/enviar-correo/`, `app.js`, `perfil.js`, D20 |
 | Diseño de correos | Un diseño para el correo del participante y los de login (Magic Link, Confirm signup), claro y oscuro | `supabase/correos/`, D21 |
 | Publicación | Commits en `main`, GitHub Pages activo, verificado en vivo (páginas, 404, sorteo, revelación, CSP, consola limpia) | D18 |
 
 ## ⏳ Pendiente
 
 ### Lo hace el usuario
-1. **Probar el correo real** desde el sitio publicado: un sorteo de 3 personas con correos propios. La función, los secretos, la tabla y las plantillas ya están configurados y verificados (D20).
+1. **Aplicar las plantillas de login** (todavía llega el diseño antiguo): en tu terminal, con `SUPABASE_ACCESS_TOKEN`, ejecuta `node supabase/correos/aplicar.mjs`. El envío del sorteo por correo ya funciona en producción (probado el 2026-11-27).
 2. **Probar el login desde el sitio publicado.** Las URLs de Supabase ya están configuradas y verificadas.
 3. **Probar desde el celular:** sorteo pequeño, compartir un link por WhatsApp, abrirlo y revelarlo con el código.
 4. **Completar el checklist manual de perfiles** (`SUPABASE-SETUP.md` §6):
