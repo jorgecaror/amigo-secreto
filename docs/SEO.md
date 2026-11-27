@@ -31,8 +31,8 @@ con el texto visible: si cambias una, cambia la otra.
 ## Después de publicar
 1. **Google Search Console** (<https://search.google.com/search-console>):
    - Agrega la propiedad con el prefijo de URL `https://jorgecaror.github.io/amigo-secreto/`.
-   - Verifica con **etiqueta HTML**: agrega el `<meta name="google-site-verification" ...>` en el `<head>` de
-     `index.html`. Es solo una meta, así que la CSP no la afecta.
+   - Verificada con **archivo HTML**: `googleaf2cb88067bc384d.html` en la raíz del repo. **No borrarlo**: si
+     desaparece, Google pierde la verificación.
    - **Sitemaps** → envía `sitemap.xml`.
    - **Inspección de URL** → "Solicitar indexación".
 2. **Bing Webmaster Tools**: importa desde Search Console. También cubre DuckDuckGo y Yahoo.
